@@ -5,7 +5,7 @@ import android.content.Intent;
 
 public class LogService extends IntentService 
 {
-	public static final String UPLOAD_LOGS_INTENT = "edu.northwestern.cbits.anthracite.UPLOAD_LOGS_INTENT";
+	private static final String LOG_FORCE_UPLOAD = "edu.northwestern.cbits.anthracite.LOG_FORCE_UPLOAD";
 
 	public LogService(String name) 
 	{
@@ -14,7 +14,26 @@ public class LogService extends IntentService
 
 	protected void onHandleIntent(Intent intent) 
 	{
-		// TODO Auto-generated method stub
-
+		final LogService me = this;
+		
+		final boolean force = intent.getBooleanExtra(LogService.LOG_FORCE_UPLOAD, false);
+		
+		Runnable r = new Runnable()
+		{
+			public void run() 
+			{
+				Logger.getInstance(me, null).attemptUploads(force);
+			}
+		};
+		
+		try
+		{
+			Thread t = new Thread(r);
+			t.start();
+		}
+		catch (OutOfMemoryError e)
+		{
+			System.gc();
+		}
 	}
 }

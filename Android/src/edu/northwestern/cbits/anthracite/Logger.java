@@ -4,13 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.KeyManagementException;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -95,18 +89,27 @@ public class Logger
 	
 	private Context _context = null;
 	private long _lastUpload = System.currentTimeMillis();
-	private String _authority;
 	private String _userId;
 	
 	public Logger(Context context, String userId) 
 	{
 		this._context = context;
 		
-		AlarmManager alarms = (AlarmManager) this._context.getSystemService(Context.ALARM_SERVICE);
-		
-		Intent intent = new Intent(LogService.UPLOAD_LOGS_INTENT);
-		PendingIntent pending = PendingIntent.getService(this._context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		alarms.setInexactRepeating(AlarmManager.RTC, 0, 60000, pending);
+		try 
+		{
+			AlarmManager alarms = (AlarmManager) this._context.getSystemService(Context.ALARM_SERVICE);
+
+			PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+			
+			Intent intent = new Intent(info.packageName + ".UPLOAD_LOGS_INTENT");
+			PendingIntent pending = PendingIntent.getService(this._context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+			
+			alarms.setInexactRepeating(AlarmManager.RTC, 0, 60000, pending);
+		} 
+		catch (NameNotFoundException e) 
+		{
+			e.printStackTrace();
+		}
 		
 		this._userId = userId;
 	}
@@ -202,11 +205,15 @@ public class Logger
 					
 					values.put(LogContentProvider.APP_EVENT_PAYLOAD, jsonEvent.toString());
 					
-					this._context.getContentResolver().insert(LogContentProvider.eventsUri(this._authority), values);
+					this._context.getContentResolver().insert(LogContentProvider.eventsUri(this._context), values);
 					
 					return true;
 				} 
 				catch (JSONException e) 
+				{
+					this.logException(e);
+				} 
+				catch (NameNotFoundException e) 
 				{
 					this.logException(e);
 				}
@@ -216,7 +223,7 @@ public class Logger
 		return false;
 	}
 
-	public void attemptUploads(String userId, boolean force) 
+	public void attemptUploads(boolean force) 
 	{
 		if (force)
 			this._lastUpload = 0;
@@ -270,7 +277,7 @@ public class Logger
 				String selection = LogContentProvider.APP_EVENT_TRANSMITTED + " = ?";
 				String[] args = { "" + 0 };
 				
-				Cursor c = this._context.getContentResolver().query(LogContentProvider.eventsUri(this._authority), null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
+				Cursor c = this._context.getContentResolver().query(LogContentProvider.eventsUri(this._context), null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
 
 				while (c.moveToNext())
 				{
@@ -310,9 +317,13 @@ public class Logger
 						String updateWhere = LogContentProvider.APP_EVENT_ID + " = ?";
 						String[] updateArgs = { "" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) };
 
-						this._context.getContentResolver().update(LogContentProvider.eventsUri(this._authority), values, updateWhere, updateArgs);
+						this._context.getContentResolver().update(LogContentProvider.eventsUri(this._context), values, updateWhere, updateArgs);
 					}
 					catch (IOException e) 
+					{
+						e.printStackTrace();
+					} 
+					catch (NameNotFoundException e) 
 					{
 						e.printStackTrace();
 					}
@@ -322,35 +333,11 @@ public class Logger
 				
 				selection = LogContentProvider.APP_EVENT_TRANSMITTED + " != ?";
 				
-				this._context.getContentResolver().delete(LogContentProvider.eventsUri(this._authority), selection, args);
+				this._context.getContentResolver().delete(LogContentProvider.eventsUri(this._context), selection, args);
 			} 
-			catch (URISyntaxException e) 
+			catch (Exception e) 
 			{
-				this.logException(e);
-			} 
-			catch (NoSuchAlgorithmException e) 
-			{
-				this.logException(e);
-			} 
-			catch (CertificateException e) 
-			{
-				this.logException(e);
-			} 
-			catch (IOException e) 
-			{
-				this.logException(e);
-			} 
-			catch (KeyStoreException e) 
-			{
-				this.logException(e);
-			} 
-			catch (KeyManagementException e) 
-			{
-				this.logException(e);
-			} 
-			catch (UnrecoverableKeyException e) 
-			{
-				this.logException(e);
+				e.printStackTrace();
 			}
 		}
 		

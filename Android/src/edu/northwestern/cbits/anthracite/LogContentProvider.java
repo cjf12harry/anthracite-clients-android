@@ -3,6 +3,8 @@ package edu.northwestern.cbits.anthracite;
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -25,9 +27,11 @@ public class LogContentProvider extends ContentProvider
     	super();
     }
     
-    protected static Uri eventsUri(String authority)
+    protected static Uri eventsUri(Context context) throws NameNotFoundException
     {
-    	Uri u = Uri.parse("content://" + authority + "/" + APP_EVENTS_TABLE);
+		PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+		
+		Uri u = Uri.parse("content://" + info.packageName + "/" + APP_EVENTS_TABLE);
     	
     	return u;
     }
