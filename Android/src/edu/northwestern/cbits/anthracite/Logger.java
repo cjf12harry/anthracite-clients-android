@@ -250,7 +250,7 @@ public class Logger
 			return;
 
 		this._uploading = true;
-		
+
 		String endpointUri = prefs.getString(Logger.LOGGER_URI, null);
 		
 		if (endpointUri != null)
@@ -308,7 +308,7 @@ public class Logger
 							Log.e("LOG", "Log upload result: " + EntityUtils.toString(httpEntity));
 						else
 							EntityUtils.toString(httpEntity);
-
+						
 						mgr.shutdown();
 
 						ContentValues values = new ContentValues();
@@ -377,7 +377,14 @@ public class Logger
 	{
 		this.setBoolean(Logger.LOGGER_ENABLED, enabled);
 	}
-	
+
+	public boolean getEnabled()
+	{
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this._context);
+		
+		return prefs.getBoolean(Logger.LOGGER_ENABLED, Logger.LOGGER_ENABLED_DEFAULT);
+	}
+
 	public void setIncludeLocation(boolean include)
 	{
 		this.setBoolean(Logger.LOGGER_LOCATION_ENABLED, include);
@@ -400,6 +407,16 @@ public class Logger
 		Editor e = prefs.edit();
 		e.putString(Logger.LOGGER_URI, uri.toString());
 		e.commit();
+	}
+
+	public Uri getUploadUri()
+	{
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this._context);
+		
+		if (prefs.contains(Logger.LOGGER_URI))
+			return Uri.parse(prefs.getString(Logger.LOGGER_URI, null));
+		
+		return null;
 	}
 
 	public void setUploadInterval(long interval)

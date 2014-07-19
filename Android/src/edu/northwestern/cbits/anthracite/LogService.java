@@ -5,7 +5,12 @@ import android.content.Intent;
 
 public class LogService extends IntentService 
 {
-	private static final String LOG_FORCE_UPLOAD = "edu.northwestern.cbits.anthracite.LOG_FORCE_UPLOAD";
+	public static final String LOG_FORCE_UPLOAD = "edu.northwestern.cbits.anthracite.LOG_FORCE_UPLOAD";
+
+	public LogService()
+	{
+		super("Anthracite");
+	}
 
 	public LogService(String name) 
 	{
