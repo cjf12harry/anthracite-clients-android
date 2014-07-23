@@ -282,7 +282,7 @@ public class Logger
 				String[] args = { "" + 0 };
 				
 				Cursor c = this._context.getContentResolver().query(LogContentProvider.eventsUri(this._context), null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
-
+				
 				while (c.moveToNext())
 				{
 					try 
@@ -397,6 +397,11 @@ public class Logger
 	public void setWifiOnly(boolean wifiOnly)
 	{
 		this.setBoolean(Logger.ONLY_WIFI, wifiOnly);
+	}
+
+	public void setDebug(boolean debug)
+	{
+		this.setBoolean(Logger.DEBUG, debug);
 	}
 
 	public void setLiberalSsl(boolean liberal)

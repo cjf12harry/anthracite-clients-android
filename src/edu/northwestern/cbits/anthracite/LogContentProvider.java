@@ -31,7 +31,7 @@ public class LogContentProvider extends ContentProvider
     {
 		PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
 		
-		Uri u = Uri.parse("content://" + info.packageName + "/" + APP_EVENTS_TABLE);
+		Uri u = Uri.parse("content://" + info.packageName + ".logging/" + APP_EVENTS_TABLE);
     	
     	return u;
     }
@@ -46,7 +46,7 @@ public class LogContentProvider extends ContentProvider
         {
             public void onCreate(SQLiteDatabase db) 
             {
-	            db.execSQL(context.getString(R.string.db_create_events_log_table));
+            	db.execSQL(context.getString(R.string.db_create_events_log_table));
 
 	            this.onUpgrade(db, 0, LogContentProvider.DATABASE_VERSION);
             }
@@ -63,7 +63,7 @@ public class LogContentProvider extends ContentProvider
             }
         };
         
-        this._db   = helper.getWritableDatabase();
+        this._db = helper.getWritableDatabase();
 
         return true;
 	}
