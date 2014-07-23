@@ -42,6 +42,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.net.http.AndroidHttpClient;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -55,7 +56,7 @@ public class Logger
 	private static final String TIME_DRIFT = "time_drift";
 	
 	private static final String CONTENT_OBJECT = "content_object";
-	private static final String USER_ID = "user_id";
+	public static final String USER_ID = "user_id";
 	private static final String STACKTRACE = "stacktrace";
 	private static final String APP_VERSION = "version";
 	private static final String APP_VERSION_CODE = "version_code";
@@ -144,6 +145,9 @@ public class Logger
 			Logger.getInstance(this._context, this._userId).logException(e);
 		}
 		
+		payload.put("os_version", Build.VERSION.RELEASE);
+		payload.put("os", "android");
+
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this._context);
 		
 		if (prefs.getBoolean(Logger.LOGGER_ENABLED, Logger.LOGGER_ENABLED_DEFAULT))
