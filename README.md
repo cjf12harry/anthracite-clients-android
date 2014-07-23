@@ -1,4 +1,4 @@
-To use this libaray, follow these steps:
+To use this library, follow these steps:
 
 Step 1: Verify that the following is within your app's AndroidManifest.xml file:
 
