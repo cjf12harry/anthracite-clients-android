@@ -60,6 +60,7 @@ public class Logger
 	private static final String STACKTRACE = "stacktrace";
 	private static final String APP_VERSION = "version";
 	private static final String APP_VERSION_CODE = "version_code";
+	private static final String APP_PACKAGE = "package";
 	private static final String JSON = "json";
 
 	private static final String EXCEPTION_EVENT = "java_exception";
@@ -139,6 +140,7 @@ public class Logger
 			
 			payload.put(Logger.APP_VERSION, info.versionName);
 			payload.put(Logger.APP_VERSION_CODE, info.versionCode);
+			payload.put(Logger.APP_PACKAGE, this._context.getPackageName());
 		}
 		catch (NameNotFoundException e)
 		{
