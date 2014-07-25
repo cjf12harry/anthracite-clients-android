@@ -4,3 +4,4 @@ gen/*
 lint.xml
 build.xml
 project.properties
+build/*
