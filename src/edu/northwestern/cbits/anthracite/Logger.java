@@ -26,6 +26,7 @@ import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
@@ -236,191 +237,208 @@ public class Logger
 		return false;
 	}
 
-	public void attemptUploads(boolean force) 
+	public void attemptUploads(final boolean force)
 	{
-		if (force)
-			this._lastUpload = 0;
-		
-		if (this._uploading)
-			return;
-		
-		long now = System.currentTimeMillis();
-		
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this._context);
-		
-		long interval = prefs.getLong(Logger.INTERVAL, Logger.DEFAULT_INTERVAL);
-		
-		if (now - this._lastUpload < interval)
-			return;
+        final Logger me = this;
 
-		this._lastUpload = now;
-		
-		boolean restrictWifi = true;
-		
-		restrictWifi = prefs.getBoolean(Logger.ONLY_WIFI, Logger.ONLY_WIFI_DEFAULT);
+        Runnable r = new Runnable()
+        {
+            public void run()
+            {
+                if (force)
+                    me._lastUpload = 0;
 
-		if (restrictWifi && WiFiHelper.wifiAvailable(this._context) == false)
-			return;
+                if (me._uploading)
+                    return;
 
-		this._uploading = true;
+                long now = System.currentTimeMillis();
 
-		String endpointUri = prefs.getString(Logger.LOGGER_URI, null);
-		
-		if (endpointUri != null)
-		{
-			try 
-			{
-				URI siteUri = new URI(endpointUri);
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me._context);
 
-				SchemeRegistry registry = new SchemeRegistry();
-				registry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-				
-				SSLSocketFactory socketFactory = SSLSocketFactory.getSocketFactory();
+                long interval = prefs.getLong(Logger.INTERVAL, Logger.DEFAULT_INTERVAL);
 
-				if (prefs.getBoolean(Logger.LIBERAL_SSL, Logger.LIBERAL_SSL_DEFAULT))
-				{
-			        KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-			        trustStore.load(null, null);
+                if (now - me._lastUpload < interval)
+                    return;
 
-			        socketFactory = new LiberalSSLSocketFactory(trustStore);								
-				}
+                me._lastUpload = now;
 
-				registry.register(new Scheme("https", socketFactory, 443));
+                boolean restrictWifi = true;
 
-				String selection = LogContentProvider.APP_EVENT_TRANSMITTED + " = ?";
-				String[] args = { "" + 0 };
-				
-				Cursor c = this._context.getContentResolver().query(LogContentProvider.eventsUri(this._context), null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
-				
-				while (c.moveToNext())
-				{
-					try 
-					{
-						if (prefs.getBoolean(Logger.RAILS_MODE, Logger.RAILS_MODE_DEFAULT))
-						{
-							AndroidHttpClient androidClient = AndroidHttpClient.newInstance("Anthracite Event Logger", this._context);
-							ThreadSafeClientConnManager mgr = new ThreadSafeClientConnManager(androidClient.getParams(), registry);
-	
-							HttpClient httpClient = new DefaultHttpClient(mgr, androidClient.getParams());
-							androidClient.close();
-							
-							String payload = c.getString(c.getColumnIndex(LogContentProvider.APP_EVENT_PAYLOAD));
-							
-							JSONObject payloadJson = new JSONObject(payload);
-							
-							HttpPost httpPost = new HttpPost(siteUri);
+                restrictWifi = prefs.getBoolean(Logger.ONLY_WIFI, Logger.ONLY_WIFI_DEFAULT);
 
-							JSONObject submission = new JSONObject();
-							
-							Date emitted = new Date((payloadJson.getLong("timestamp") * 1000));
+                if (restrictWifi && WiFiHelper.wifiAvailable(me._context) == false)
+                    return;
 
+                me._uploading = true;
 
-						    TimeZone tz = TimeZone.getTimeZone("UTC");
-						    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
-						    df.setTimeZone(tz);
+                String endpointUri = prefs.getString(Logger.LOGGER_URI, null);
 
-							submission.put("date_emitted", df.format(emitted));
-							submission.put("payload", payload);
-							submission.put("kind", payloadJson.getString("event_type"));
-							submission.put("user_ID", payloadJson.getString("user_id"));
-							
-							HttpEntity entity = new StringEntity(submission.toString(2));
-	
-							httpPost.setEntity(entity);
-							httpPost.setHeader("Content-Type", submission.toString(2));
-	
-							httpClient.execute(httpPost);
-							HttpResponse response = httpClient.execute(httpPost);
-	
-							HttpEntity httpEntity = response.getEntity();
-							
-							String responseContent = EntityUtils.toString(httpEntity);
-							
-							if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
-								Log.e("LOG", "Log upload result: " + responseContent);
-	
-							JSONObject statusJson = new JSONObject(responseContent);						
-							
-							mgr.shutdown();
-							
-							if (statusJson.has("status") && "success".equalsIgnoreCase(statusJson.getString("status")))
-							{
-								ContentValues values = new ContentValues();
-								values.put(LogContentProvider.APP_EVENT_TRANSMITTED, System.currentTimeMillis());
-		
-								String updateWhere = LogContentProvider.APP_EVENT_ID + " = ?";
-								String[] updateArgs = { "" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) };
-		
-								this._context.getContentResolver().update(LogContentProvider.eventsUri(this._context), values, updateWhere, updateArgs);
-							}
-						}
-						else
-						{
-							AndroidHttpClient androidClient = AndroidHttpClient.newInstance("Anthracite Event Logger", this._context);
-							ThreadSafeClientConnManager mgr = new ThreadSafeClientConnManager(androidClient.getParams(), registry);
-	
-							HttpClient httpClient = new DefaultHttpClient(mgr, androidClient.getParams());
-							androidClient.close();
-							
-							String payload = c.getString(c.getColumnIndex(LogContentProvider.APP_EVENT_PAYLOAD));
-							
-							HttpPost httpPost = new HttpPost(siteUri);
-							
-							List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
-							nameValuePairs.add(new BasicNameValuePair(Logger.JSON, payload.toString()));
-							HttpEntity entity = new UrlEncodedFormEntity(nameValuePairs, HTTP.US_ASCII);
-	
-							httpPost.setEntity(entity);
-	
-							httpClient.execute(httpPost);
-							HttpResponse response = httpClient.execute(httpPost);
-	
-							HttpEntity httpEntity = response.getEntity();
-							
-							String responseContent = EntityUtils.toString(httpEntity);
-							
-							if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
-								Log.e("LOG", "Log upload result: " + responseContent);
-	
-							JSONObject statusJson = new JSONObject(responseContent);						
-							
-							mgr.shutdown();
-							
-							if (statusJson.has("status") && "success".equalsIgnoreCase(statusJson.getString("status")))
-							{
-								ContentValues values = new ContentValues();
-								values.put(LogContentProvider.APP_EVENT_TRANSMITTED, System.currentTimeMillis());
-		
-								String updateWhere = LogContentProvider.APP_EVENT_ID + " = ?";
-								String[] updateArgs = { "" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) };
-		
-								this._context.getContentResolver().update(LogContentProvider.eventsUri(this._context), values, updateWhere, updateArgs);
-							}
-						}
-					}
-					catch (IOException e) 
-					{
-						e.printStackTrace();
-					} 
-					catch (NameNotFoundException e) 
-					{
-						e.printStackTrace();
-					}
-				}
+                if (endpointUri != null)
+                {
+                    try
+                    {
+                        URI siteUri = new URI(endpointUri);
 
-				c.close();
-				
-				selection = LogContentProvider.APP_EVENT_TRANSMITTED + " != ?";
-				
-				this._context.getContentResolver().delete(LogContentProvider.eventsUri(this._context), selection, args);
-			} 
-			catch (Exception e) 
-			{
-				e.printStackTrace();
-			}
-		}
-		
-		this._uploading = false;
+                        SchemeRegistry registry = new SchemeRegistry();
+                        registry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+
+                        SSLSocketFactory socketFactory = SSLSocketFactory.getSocketFactory();
+
+                        if (prefs.getBoolean(Logger.LIBERAL_SSL, Logger.LIBERAL_SSL_DEFAULT))
+                        {
+                            KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                            trustStore.load(null, null);
+
+                            socketFactory = new LiberalSSLSocketFactory(trustStore);
+                        }
+
+                        registry.register(new Scheme("https", socketFactory, 443));
+
+                        String selection = LogContentProvider.APP_EVENT_TRANSMITTED + " = ?";
+                        String[] args = { "" + 0 };
+
+                        Cursor c = me._context.getContentResolver().query(LogContentProvider.eventsUri(me._context), null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
+
+                        while (c.moveToNext())
+                        {
+                            try
+                            {
+                                if (prefs.getBoolean(Logger.RAILS_MODE, Logger.RAILS_MODE_DEFAULT))
+                                {
+                                    AndroidHttpClient androidClient = AndroidHttpClient.newInstance("Anthracite Event Logger", me._context);
+                                    ThreadSafeClientConnManager mgr = new ThreadSafeClientConnManager(androidClient.getParams(), registry);
+
+                                    HttpClient httpClient = new DefaultHttpClient(mgr, androidClient.getParams());
+                                    androidClient.close();
+
+                                    String payload = c.getString(c.getColumnIndex(LogContentProvider.APP_EVENT_PAYLOAD));
+
+                                    JSONObject payloadJson = new JSONObject(payload);
+
+                                    HttpPost httpPost = new HttpPost(siteUri);
+
+                                    JSONObject submission = new JSONObject();
+
+                                    Date emitted = new Date((payloadJson.getLong("timestamp") * 1000));
+
+                                    TimeZone tz = TimeZone.getTimeZone("UTC");
+                                    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS'000'");
+                                    df.setTimeZone(tz);
+
+                                    JSONObject event = new JSONObject();
+
+                                    event.put("date_emitted", df.format(emitted));
+                                    event.put("payload", payload);
+                                    event.put("kind", payloadJson.getString("event_type"));
+                                    event.put("user_ID", payloadJson.getString("user_id"));
+
+                                    submission.put("event", event);
+
+                                    StringEntity entity = new StringEntity(submission.toString(2));
+                                    entity.setContentType("application/json");
+
+                                    Log.e("SE", "JSON: " + submission.toString(2));
+
+                                    httpPost.setEntity(entity);
+                        //            httpPost.setHeader("Content-Type: ", "application/json");
+
+                                    httpClient.execute(httpPost);
+                                    HttpResponse response = httpClient.execute(httpPost);
+
+                                    HttpEntity httpEntity = response.getEntity();
+
+                                    String responseContent = EntityUtils.toString(httpEntity);
+
+                                    if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
+                                        Log.e("LOG", "Log upload result: " + responseContent);
+
+                                    JSONObject statusJson = new JSONObject(responseContent);
+
+                                    mgr.shutdown();
+
+                                    if (statusJson.has("status") && "success".equalsIgnoreCase(statusJson.getString("status")))
+                                    {
+                                        ContentValues values = new ContentValues();
+                                        values.put(LogContentProvider.APP_EVENT_TRANSMITTED, System.currentTimeMillis());
+
+                                        String updateWhere = LogContentProvider.APP_EVENT_ID + " = ?";
+                                        String[] updateArgs = { "" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) };
+
+                                        me._context.getContentResolver().update(LogContentProvider.eventsUri(me._context), values, updateWhere, updateArgs);
+                                    }
+                                }
+                                else
+                                {
+                                    AndroidHttpClient androidClient = AndroidHttpClient.newInstance("Anthracite Event Logger", me._context);
+                                    ThreadSafeClientConnManager mgr = new ThreadSafeClientConnManager(androidClient.getParams(), registry);
+
+                                    HttpClient httpClient = new DefaultHttpClient(mgr, androidClient.getParams());
+                                    androidClient.close();
+
+                                    String payload = c.getString(c.getColumnIndex(LogContentProvider.APP_EVENT_PAYLOAD));
+
+                                    HttpPost httpPost = new HttpPost(siteUri);
+
+                                    List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+                                    nameValuePairs.add(new BasicNameValuePair(Logger.JSON, payload.toString()));
+                                    HttpEntity entity = new UrlEncodedFormEntity(nameValuePairs, HTTP.US_ASCII);
+
+                                    httpPost.setEntity(entity);
+
+                                    httpClient.execute(httpPost);
+                                    HttpResponse response = httpClient.execute(httpPost);
+
+                                    HttpEntity httpEntity = response.getEntity();
+
+                                    String responseContent = EntityUtils.toString(httpEntity);
+
+                                    if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
+                                        Log.e("LOG", "Log upload result: " + responseContent);
+
+                                    JSONObject statusJson = new JSONObject(responseContent);
+
+                                    mgr.shutdown();
+
+                                    if (statusJson.has("status") && "success".equalsIgnoreCase(statusJson.getString("status")))
+                                    {
+                                        ContentValues values = new ContentValues();
+                                        values.put(LogContentProvider.APP_EVENT_TRANSMITTED, System.currentTimeMillis());
+
+                                        String updateWhere = LogContentProvider.APP_EVENT_ID + " = ?";
+                                        String[] updateArgs = { "" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) };
+
+                                        me._context.getContentResolver().update(LogContentProvider.eventsUri(me._context), values, updateWhere, updateArgs);
+                                    }
+                                }
+                            }
+                            catch (IOException e)
+                            {
+                                e.printStackTrace();
+                            }
+                            catch (NameNotFoundException e)
+                            {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        c.close();
+
+                        selection = LogContentProvider.APP_EVENT_TRANSMITTED + " != ?";
+
+                        me._context.getContentResolver().delete(LogContentProvider.eventsUri(me._context), selection, args);
+                    }
+                    catch (Exception e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+
+                me._uploading = false;
+            }
+        };
+
+        Thread t = new Thread(r);
+        t.start();
 	}
 
 	public void logException(Throwable e) 
