@@ -314,7 +314,6 @@ public class Logger
 							
 							Date emitted = new Date((payloadJson.getLong("timestamp") * 1000));
 
-
 						    TimeZone tz = TimeZone.getTimeZone("UTC");
 						    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
 						    df.setTimeZone(tz);
@@ -324,10 +323,10 @@ public class Logger
 							submission.put("kind", payloadJson.getString("event_type"));
 							submission.put("user_ID", payloadJson.getString("user_id"));
 							
-							HttpEntity entity = new StringEntity(submission.toString(2));
+							StringEntity entity = new StringEntity(submission.toString(2));
+							entity.setContentType("application/json");							
 	
 							httpPost.setEntity(entity);
-							httpPost.setHeader("Content-Type", submission.toString(2));
 	
 							httpClient.execute(httpPost);
 							HttpResponse response = httpClient.execute(httpPost);
