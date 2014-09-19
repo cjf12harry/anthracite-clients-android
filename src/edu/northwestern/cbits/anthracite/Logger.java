@@ -262,9 +262,7 @@ public class Logger
 
                 me._lastUpload = now;
 
-                boolean restrictWifi = true;
-
-                restrictWifi = prefs.getBoolean(Logger.ONLY_WIFI, Logger.ONLY_WIFI_DEFAULT);
+                boolean restrictWifi = prefs.getBoolean(Logger.ONLY_WIFI, Logger.ONLY_WIFI_DEFAULT);
 
                 if (restrictWifi && WiFiHelper.wifiAvailable(me._context) == false)
                     return;
