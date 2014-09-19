@@ -82,7 +82,7 @@ public class Logger
 	private static final boolean LIBERAL_SSL_DEFAULT = false;
 	private static final String LIBERAL_SSL = "edu.northwestern.cbits.anthracite.LIBERAL_SSL";
 	
-	private static final boolean DEBUG_DEFAULT = false;
+	private static final boolean DEBUG_DEFAULT = true;
 	private static final String DEBUG = "edu.northwestern.cbits.anthracite.DEBUG";
 
 	private static Logger _sharedInstance = null;
@@ -251,7 +251,7 @@ public class Logger
 		boolean restrictWifi = true;
 		
 		restrictWifi = prefs.getBoolean(Logger.ONLY_WIFI, Logger.ONLY_WIFI_DEFAULT);
-		
+
 		if (restrictWifi && WiFiHelper.wifiAvailable(this._context) == false)
 			return;
 
@@ -310,20 +310,25 @@ public class Logger
 
 						HttpEntity httpEntity = response.getEntity();
 						
+						String responseContent = EntityUtils.toString(httpEntity);
+						
 						if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
-							Log.e("LOG", "Log upload result: " + EntityUtils.toString(httpEntity));
-						else
-							EntityUtils.toString(httpEntity);
+							Log.e("LOG", "Log upload result: " + responseContent);
+
+						JSONObject statusJson = new JSONObject(responseContent);						
 						
 						mgr.shutdown();
-
-						ContentValues values = new ContentValues();
-						values.put(LogContentProvider.APP_EVENT_TRANSMITTED, System.currentTimeMillis());
-
-						String updateWhere = LogContentProvider.APP_EVENT_ID + " = ?";
-						String[] updateArgs = { "" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) };
-
-						this._context.getContentResolver().update(LogContentProvider.eventsUri(this._context), values, updateWhere, updateArgs);
+						
+						if (statusJson.has("status") && "success".equalsIgnoreCase(statusJson.getString("status")))
+						{
+							ContentValues values = new ContentValues();
+							values.put(LogContentProvider.APP_EVENT_TRANSMITTED, System.currentTimeMillis());
+	
+							String updateWhere = LogContentProvider.APP_EVENT_ID + " = ?";
+							String[] updateArgs = { "" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) };
+	
+							this._context.getContentResolver().update(LogContentProvider.eventsUri(this._context), values, updateWhere, updateArgs);
+						}
 					}
 					catch (IOException e) 
 					{
