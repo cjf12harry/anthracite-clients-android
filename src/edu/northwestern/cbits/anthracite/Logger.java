@@ -82,7 +82,7 @@ public class Logger
 	private static final boolean LIBERAL_SSL_DEFAULT = false;
 	private static final String LIBERAL_SSL = "edu.northwestern.cbits.anthracite.LIBERAL_SSL";
 	
-	private static final boolean DEBUG_DEFAULT = false;
+	private static final boolean DEBUG_DEFAULT = true;
 	private static final String DEBUG = "edu.northwestern.cbits.anthracite.DEBUG";
 
 	private static Logger _sharedInstance = null;
