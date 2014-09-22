@@ -86,7 +86,7 @@ public class Logger
 	private static final boolean LIBERAL_SSL_DEFAULT = false;
 	private static final String LIBERAL_SSL = "edu.northwestern.cbits.anthracite.LIBERAL_SSL";
 	
-	private static final boolean DEBUG_DEFAULT = true;
+	private static final boolean DEBUG_DEFAULT = false;
 	private static final String DEBUG = "edu.northwestern.cbits.anthracite.DEBUG";
 
 	private static final String RAILS_MODE = "edu.northwestern.cbits.anthracite.RAILS_MODE";
@@ -334,7 +334,7 @@ public class Logger
                                     StringEntity entity = new StringEntity(submission.toString(2));
                                     entity.setContentType("application/json");
 
-                                    Log.e("SE", "JSON: " + submission.toString(2));
+                        //            Log.e("SE", "JSON: " + submission.toString(2));
 
                                     httpPost.setEntity(entity);
                         //            httpPost.setHeader("Content-Type: ", "application/json");
