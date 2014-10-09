@@ -348,13 +348,14 @@ public class Logger
                                     String responseContent = EntityUtils.toString(httpEntity);
 
                                     if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
-                                        Log.e("LOG", "Log upload result: " + responseContent);
+                                        Log.e("LOG", "Log upload result: " + responseContent + " (" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) + ")");
 
                                     JSONObject statusJson = new JSONObject(responseContent);
 
                                     mgr.shutdown();
 
-                                    if (statusJson.has("status") && "success".equalsIgnoreCase(statusJson.getString("status")))
+                                    if ((statusJson.has("status") && "success".equalsIgnoreCase(statusJson.getString("status"))) ||
+                                        (statusJson.has("result") && "success".equalsIgnoreCase(statusJson.getString("result"))))
                                     {
                                         ContentValues values = new ContentValues();
                                         values.put(LogContentProvider.APP_EVENT_TRANSMITTED, System.currentTimeMillis());
@@ -391,13 +392,14 @@ public class Logger
                                     String responseContent = EntityUtils.toString(httpEntity);
 
                                     if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
-                                        Log.e("LOG", "Log upload result: " + responseContent);
+                                        Log.e("LOG", "Log upload result: " + responseContent + " (" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) + ")");
 
                                     JSONObject statusJson = new JSONObject(responseContent);
 
                                     mgr.shutdown();
 
-                                    if (statusJson.has("status") && "success".equalsIgnoreCase(statusJson.getString("status")))
+                                    if ((statusJson.has("status") && "success".equalsIgnoreCase(statusJson.getString("status"))) ||
+                                        (statusJson.has("result") && "success".equalsIgnoreCase(statusJson.getString("result"))))
                                     {
                                         ContentValues values = new ContentValues();
                                         values.put(LogContentProvider.APP_EVENT_TRANSMITTED, System.currentTimeMillis());
