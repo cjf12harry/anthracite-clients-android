@@ -425,6 +425,68 @@ public class Logger
                         selection = LogContentProvider.APP_EVENT_TRANSMITTED + " != ?";
 
                         me._context.getContentResolver().delete(LogContentProvider.eventsUri(me._context), selection, args);
+
+                        selection = LogContentProvider.APP_UPLOAD_TRANSMITTED + " = ?";
+
+                        c = me._context.getContentResolver().query(LogContentProvider.uploadsUri(me._context), null, selection, args, LogContentProvider.APP_UPLOAD_RECORDED);
+
+                        while (c.moveToNext())
+                        {
+                            try
+                            {
+                                AndroidHttpClient androidClient = AndroidHttpClient.newInstance("Anthracite Event Logger", me._context);
+                                ThreadSafeClientConnManager mgr = new ThreadSafeClientConnManager(androidClient.getParams(), registry);
+
+                                HttpClient httpClient = new DefaultHttpClient(mgr, androidClient.getParams());
+                                androidClient.close();
+
+                                String payload = c.getString(c.getColumnIndex(LogContentProvider.APP_UPLOAD_PAYLOAD));
+
+                                JSONObject payloadJson = new JSONObject(payload);
+
+                                HttpPost httpPost = new HttpPost(siteUri);
+
+                                StringEntity entity = new StringEntity(payloadJson.toString(2));
+                                entity.setContentType("application/json");
+
+                                httpPost.setEntity(entity);
+
+                                httpClient.execute(httpPost);
+                                HttpResponse response = httpClient.execute(httpPost);
+
+                                HttpEntity httpEntity = response.getEntity();
+                                
+                                if (response.getStatusLine().getStatusCode() == 200)
+                                {
+                                    ContentValues values = new ContentValues();
+                                    values.put(LogContentProvider.APP_UPLOAD_TRANSMITTED, System.currentTimeMillis());
+
+                                    String updateWhere = LogContentProvider.APP_EVENT_ID + " = ?";
+                                    String[] updateArgs = { "" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) };
+
+                                    me._context.getContentResolver().update(LogContentProvider.eventsUri(me._context), values, updateWhere, updateArgs);
+                                }
+
+                                if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
+                                    Log.e("LOG", "Upload transmission result: " + EntityUtils.toString(httpEntity) + " (" + c.getLong(c.getColumnIndex(LogContentProvider.APP_UPLOAD_ID)) + ")");
+
+                                mgr.shutdown();
+                            }
+                            catch (IOException e)
+                            {
+                                e.printStackTrace();
+                            }
+                            catch (NameNotFoundException e)
+                            {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        c.close();
+
+                        selection = LogContentProvider.APP_UPLOAD_TRANSMITTED + " != ?";
+
+                        me._context.getContentResolver().delete(LogContentProvider.eventsUri(me._context), selection, args);
                     }
                     catch (Exception e)
                     {
@@ -532,5 +594,28 @@ public class Logger
 		Editor e = prefs.edit();
 		e.putLong(Logger.INTERVAL, interval);
 		e.commit();
+	}
+	
+	public boolean postJsonContent(JSONObject content, Uri destination)
+	{
+		long now = System.currentTimeMillis();
+		
+		ContentValues values = new ContentValues();
+		values.put(LogContentProvider.APP_UPLOAD_PAYLOAD, content.toString());
+		values.put(LogContentProvider.APP_UPLOAD_URI, destination.toString());
+		values.put(LogContentProvider.APP_UPLOAD_RECORDED, now);
+		
+		Uri u = null;
+
+		try 
+		{
+			u  = this._context.getContentResolver().insert(LogContentProvider.uploadsUri(this._context), values);
+		} 
+		catch (NameNotFoundException e) 
+		{
+			e.printStackTrace();
+		}
+
+		return (u != null);
 	}
 }

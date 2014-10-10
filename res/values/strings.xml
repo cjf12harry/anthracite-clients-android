@@ -2,4 +2,5 @@
     <string name="app_name">Anthracite Client</string>
 
     <string name="db_create_events_log_table">CREATE TABLE IF NOT EXISTS app_events(_id INTEGER PRIMARY KEY, name TEXT, payload TEXT, recorded INTEGER DEFAULT 0, transmitted INTEGER DEFAULT 0);</string>
+    <string name="db_create_uploads_log_table">CREATE TABLE IF NOT EXISTS app_uploads(_id INTEGER PRIMARY KEY, payload TEXT, uri TEXT, recorded INTEGER DEFAULT 0, transmitted INTEGER DEFAULT 0);</string>
 </resources>
