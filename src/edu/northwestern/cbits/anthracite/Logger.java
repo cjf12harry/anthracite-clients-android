@@ -32,6 +32,8 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.ContentValues;
@@ -617,5 +619,21 @@ public class Logger
 		}
 
 		return (u != null);
+	}
+	
+	public static String getSystemUserId(Context context)
+	{
+		String userId = null;
+		
+		AccountManager manager = (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);
+		Account[] list = manager.getAccountsByType("com.google");
+
+		if (list.length == 0)
+			list = manager.getAccounts();
+
+		if (list.length > 0)
+			userId = list[0].name;
+
+		return userId;
 	}
 }
