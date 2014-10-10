@@ -134,8 +134,10 @@ public class LogContentProvider extends ContentProvider
         {
 	        case LogContentProvider.APP_EVENTS:
 	            id = this._db.insert(LogContentProvider.APP_EVENTS_TABLE, null, values);
+	            break;
 	        case LogContentProvider.APP_UPLOADS:
 	            id = this._db.insert(LogContentProvider.APP_UPLOADS_TABLE, null, values);
+	            break;
         }
 	            
 	    return Uri.withAppendedPath(uri, "" + id);
