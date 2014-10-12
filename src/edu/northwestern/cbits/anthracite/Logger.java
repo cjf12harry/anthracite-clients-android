@@ -336,10 +336,7 @@ public class Logger
                                     StringEntity entity = new StringEntity(submission.toString(2));
                                     entity.setContentType("application/json");
 
-                        //            Log.e("SE", "JSON: " + submission.toString(2));
-
                                     httpPost.setEntity(entity);
-                        //            httpPost.setHeader("Content-Type: ", "application/json");
 
                                     httpClient.execute(httpPost);
                                     HttpResponse response = httpClient.execute(httpPost);
