@@ -271,6 +271,8 @@ public class Logger
                 me._uploading = true;
 
                 String endpointUri = prefs.getString(Logger.LOGGER_URI, null);
+                
+                Log.e("AN", "USING LOG URI: " + endpointUri);
 
                 if (endpointUri != null)
                 {
@@ -428,9 +430,17 @@ public class Logger
                         selection = LogContentProvider.APP_UPLOAD_TRANSMITTED + " = ?";
 
                         c = me._context.getContentResolver().query(LogContentProvider.uploadsUri(me._context), null, selection, args, LogContentProvider.APP_UPLOAD_RECORDED);
+                        
+                        Log.e("AN", "PENDING UPLOAD COUNT: " + c.getCount());
 
                         while (c.moveToNext())
                         {
+                            String payload = c.getString(c.getColumnIndex(LogContentProvider.APP_UPLOAD_PAYLOAD));
+                            String uploadUri = c.getString(c.getColumnIndex(LogContentProvider.APP_UPLOAD_URI));
+
+                            Log.e("AN", "UPLOADING PAYLOAD TO " + uploadUri);
+                            Log.e("AN", "PAYLOAD: " + payload);
+                            
                             try
                             {
                                 AndroidHttpClient androidClient = AndroidHttpClient.newInstance("Anthracite Event Logger", me._context);
@@ -438,8 +448,6 @@ public class Logger
 
                                 HttpClient httpClient = new DefaultHttpClient(mgr, androidClient.getParams());
                                 androidClient.close();
-
-                                String payload = c.getString(c.getColumnIndex(LogContentProvider.APP_UPLOAD_PAYLOAD));
 
                                 JSONObject payloadJson = new JSONObject(payload);
 
