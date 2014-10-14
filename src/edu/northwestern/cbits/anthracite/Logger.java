@@ -451,7 +451,7 @@ public class Logger
 
                                 JSONObject payloadJson = new JSONObject(payload);
 
-                                HttpPost httpPost = new HttpPost(siteUri);
+                                HttpPost httpPost = new HttpPost(uploadUri);
 
                                 StringEntity entity = new StringEntity(payloadJson.toString(2));
                                 entity.setContentType("application/json");
