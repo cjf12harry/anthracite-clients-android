@@ -2,6 +2,7 @@ package edu.northwestern.cbits.anthracite;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.util.Log;
 
 public class LogService extends IntentService 
 {
@@ -22,6 +23,8 @@ public class LogService extends IntentService
 		final LogService me = this;
 		
 		final boolean force = intent.getBooleanExtra(LogService.LOG_FORCE_UPLOAD, false);
+
+        Log.e("AN", "UPLOAD INTENT: " + force);
 		
 		Runnable r = new Runnable()
 		{

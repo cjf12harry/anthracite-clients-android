@@ -105,7 +105,7 @@ public class Logger
 	public Logger(Context context, String userId) 
 	{
 		this._context = context;
-		
+
 		try 
 		{
 			AlarmManager alarms = (AlarmManager) this._context.getSystemService(Context.ALARM_SERVICE);
@@ -113,15 +113,16 @@ public class Logger
 			PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
 			
 			Intent intent = new Intent(info.packageName + ".UPLOAD_LOGS_INTENT");
+
 			PendingIntent pending = PendingIntent.getService(this._context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-			
-			alarms.setInexactRepeating(AlarmManager.RTC, 0, 60000, pending);
-		} 
+
+            alarms.setInexactRepeating(AlarmManager.RTC, 0, 60000, pending);
+		}
 		catch (NameNotFoundException e) 
 		{
 			e.printStackTrace();
 		}
-		
+
 		this._userId = userId;
 	}
 
@@ -197,7 +198,7 @@ public class Logger
 					}
 				}
 
-				payload.put(Logger.EVENT_TYPE, event);
+                payload.put(Logger.EVENT_TYPE, event);
 				payload.put(Logger.TIMESTAMP, now / 1000);
 				
 				if (payload.containsKey(Logger.USER_ID) == false)
@@ -272,8 +273,6 @@ public class Logger
 
                 String endpointUri = prefs.getString(Logger.LOGGER_URI, null);
                 
-                Log.e("AN", "USING LOG URI: " + endpointUri);
-
                 if (endpointUri != null)
                 {
                     try
@@ -430,17 +429,12 @@ public class Logger
                         selection = LogContentProvider.APP_UPLOAD_TRANSMITTED + " = ?";
 
                         c = me._context.getContentResolver().query(LogContentProvider.uploadsUri(me._context), null, selection, args, LogContentProvider.APP_UPLOAD_RECORDED);
-                        
-                        Log.e("AN", "PENDING UPLOAD COUNT: " + c.getCount());
 
                         while (c.moveToNext())
                         {
                             String payload = c.getString(c.getColumnIndex(LogContentProvider.APP_UPLOAD_PAYLOAD));
                             String uploadUri = c.getString(c.getColumnIndex(LogContentProvider.APP_UPLOAD_URI));
 
-                            Log.e("AN", "UPLOADING PAYLOAD TO " + uploadUri);
-                            Log.e("AN", "PAYLOAD: " + payload);
-                            
                             try
                             {
                                 AndroidHttpClient androidClient = AndroidHttpClient.newInstance("Anthracite Event Logger", me._context);
@@ -462,16 +456,18 @@ public class Logger
                                 HttpResponse response = httpClient.execute(httpPost);
 
                                 HttpEntity httpEntity = response.getEntity();
-                                
-                                if (response.getStatusLine().getStatusCode() == 200)
+
+                                int status = response.getStatusLine().getStatusCode();
+
+                                if (status >= 200 && status < 300)
                                 {
                                     ContentValues values = new ContentValues();
                                     values.put(LogContentProvider.APP_UPLOAD_TRANSMITTED, System.currentTimeMillis());
 
-                                    String updateWhere = LogContentProvider.APP_EVENT_ID + " = ?";
-                                    String[] updateArgs = { "" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) };
+                                    String updateWhere = LogContentProvider.APP_UPLOAD_ID + " = ?";
+                                    String[] updateArgs = { "" + c.getLong(c.getColumnIndex(LogContentProvider.APP_UPLOAD_ID)) };
 
-                                    me._context.getContentResolver().update(LogContentProvider.eventsUri(me._context), values, updateWhere, updateArgs);
+                                    me._context.getContentResolver().update(LogContentProvider.uploadsUri(me._context), values, updateWhere, updateArgs);
                                 }
 
                                 if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
