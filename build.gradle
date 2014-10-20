@@ -22,8 +22,8 @@ android {
 
         androidTest.setRoot('tests')
     }
-    compileSdkVersion 19
-    buildToolsVersion '20.0.0'
+    compileSdkVersion 21
+    buildToolsVersion '21.0.1'
     defaultConfig {}
     productFlavors {
     }
