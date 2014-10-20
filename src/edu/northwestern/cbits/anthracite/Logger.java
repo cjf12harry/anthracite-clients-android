@@ -452,7 +452,6 @@ public class Logger
 
                                 httpPost.setEntity(entity);
 
-                                httpClient.execute(httpPost);
                                 HttpResponse response = httpClient.execute(httpPost);
 
                                 HttpEntity httpEntity = response.getEntity();
@@ -601,7 +600,15 @@ public class Logger
 	
 	public boolean postJsonContent(JSONObject content, Uri destination)
 	{
-		long now = System.currentTimeMillis();
+        try
+        {
+            Log.e("AN", "JSON: " + content.toString(2));
+        }
+        catch (JSONException e)
+        {
+            e.printStackTrace();
+        }
+        long now = System.currentTimeMillis();
 		
 		ContentValues values = new ContentValues();
 		values.put(LogContentProvider.APP_UPLOAD_PAYLOAD, content.toString());
