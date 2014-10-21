@@ -243,6 +243,11 @@ public class Logger
 	{
         final Logger me = this;
 
+        if (this._uploading)
+        	return;
+
+        Log.e("AN", "UPLOAD INTENT: " + force);
+
         Runnable r = new Runnable()
         {
             public void run()
@@ -252,6 +257,8 @@ public class Logger
 
                 if (me._uploading)
                     return;
+
+                me._uploading = true;
 
                 long now = System.currentTimeMillis();
 
@@ -268,8 +275,6 @@ public class Logger
 
                 if (restrictWifi && WiFiHelper.wifiAvailable(me._context) == false)
                     return;
-
-                me._uploading = true;
 
                 String endpointUri = prefs.getString(Logger.LOGGER_URI, null);
                 
@@ -299,6 +304,8 @@ public class Logger
 
                         Cursor c = me._context.getContentResolver().query(LogContentProvider.eventsUri(me._context), null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
 
+                        Log.e("AN", "TO UPLOAD: " + c.getCount());
+                        
                         while (c.moveToNext())
                         {
                             try
@@ -490,12 +497,16 @@ public class Logger
 
                         me._context.getContentResolver().delete(LogContentProvider.eventsUri(me._context), selection, args);
                     }
+                    catch (OutOfMemoryError e)
+                    {
+                        e.printStackTrace();
+                    }
                     catch (Exception e)
                     {
                         e.printStackTrace();
                     }
                 }
-
+                
                 me._uploading = false;
             }
         };

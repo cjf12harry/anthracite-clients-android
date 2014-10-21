@@ -24,24 +24,6 @@ public class LogService extends IntentService
 		
 		final boolean force = intent.getBooleanExtra(LogService.LOG_FORCE_UPLOAD, false);
 
-        Log.e("AN", "UPLOAD INTENT: " + force);
-		
-		Runnable r = new Runnable()
-		{
-			public void run() 
-			{
-				Logger.getInstance(me, null).attemptUploads(force);
-			}
-		};
-		
-		try
-		{
-			Thread t = new Thread(r);
-			t.start();
-		}
-		catch (OutOfMemoryError e)
-		{
-			System.gc();
-		}
+        Logger.getInstance(me, null).attemptUploads(force);
 	}
 }
