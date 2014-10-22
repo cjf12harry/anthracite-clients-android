@@ -246,8 +246,6 @@ public class Logger
         if (this._uploading)
         	return;
 
-        Log.e("AN", "UPLOAD INTENT: " + force);
-
         Runnable r = new Runnable()
         {
             public void run()
@@ -304,8 +302,6 @@ public class Logger
 
                         Cursor c = me._context.getContentResolver().query(LogContentProvider.eventsUri(me._context), null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
 
-                        Log.e("AN", "TO UPLOAD: " + c.getCount());
-                        
                         while (c.moveToNext())
                         {
                             try
@@ -611,14 +607,6 @@ public class Logger
 	
 	public boolean postJsonContent(JSONObject content, Uri destination)
 	{
-        try
-        {
-            Log.e("AN", "JSON: " + content.toString(2));
-        }
-        catch (JSONException e)
-        {
-            e.printStackTrace();
-        }
         long now = System.currentTimeMillis();
 		
 		ContentValues values = new ContentValues();
