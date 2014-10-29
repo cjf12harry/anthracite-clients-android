@@ -29,6 +29,7 @@ import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -135,7 +136,8 @@ public class Logger {
         return Logger._sharedInstance;
     }
 
-    public boolean log(String event, Map<String, Object> payload) {
+    @SuppressWarnings("unchecked")
+	public boolean log(String event, Map<String, Object> payload) {
         long now = System.currentTimeMillis();
 
         if (payload == null)
@@ -212,7 +214,21 @@ public class Logger {
                     JSONObject jsonEvent = new JSONObject();
 
                     for (String key : payload.keySet()) {
-                        jsonEvent.put(key, payload.get(key));
+                    	Object value = payload.get(key);
+                    	
+                    	if (value instanceof List)
+                    	{
+                    		List<Object> list = (List<Object>) value;
+                    		
+                    		JSONArray jsonArray = new JSONArray();
+                    		
+                    		for (Object item : list)
+                    			jsonArray.put(item);
+                    		
+                    		value = jsonArray;
+                    	}
+
+                   		jsonEvent.put(key, value);
                     }
 
                     jsonEvent.put(Logger.CONTENT_OBJECT, new JSONObject(
