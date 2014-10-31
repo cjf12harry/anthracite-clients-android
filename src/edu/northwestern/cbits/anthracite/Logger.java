@@ -257,8 +257,12 @@ public class Logger {
     public void attemptUploads(final boolean force) {
         final Logger me = this;
 
+        Log.e("AS", "1 " + force);
+
         if (this._uploading)
             return;
+
+        Log.e("AS", "2");
 
         Runnable r = new Runnable() {
             public void run() {
@@ -268,8 +272,6 @@ public class Logger {
                 if (me._uploading)
                     return;
 
-                me._uploading = true;
-
                 long now = System.currentTimeMillis();
 
                 SharedPreferences prefs = PreferenceManager
@@ -278,10 +280,14 @@ public class Logger {
                 long interval = prefs.getLong(Logger.INTERVAL,
                         Logger.DEFAULT_INTERVAL);
 
+                Log.e("AS", "3");
+
                 if (now - me._lastUpload < interval)
                     return;
 
                 me._lastUpload = now;
+
+                Log.e("AS", "4");
 
                 boolean restrictWifi = prefs.getBoolean(Logger.ONLY_WIFI,
                         Logger.ONLY_WIFI_DEFAULT);
@@ -290,9 +296,13 @@ public class Logger {
                         && WiFiHelper.wifiAvailable(me._context) == false)
                     return;
 
+                me._uploading = true;
+
                 String endpointUri = prefs.getString(Logger.LOGGER_URI, null);
 
                 if (endpointUri != null) {
+                    Log.e("AS", "5");
+
                     try {
                         URI siteUri = new URI(endpointUri);
 
@@ -386,6 +396,8 @@ public class Logger {
 
                                     String responseContent = EntityUtils
                                             .toString(httpEntity);
+
+                                    Log.e("AS", "6");
 
                                     if (prefs.getBoolean(Logger.DEBUG,
                                             Logger.DEBUG_DEFAULT))
