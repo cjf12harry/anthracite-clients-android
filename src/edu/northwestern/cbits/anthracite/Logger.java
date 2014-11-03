@@ -100,7 +100,7 @@ public class Logger
     private boolean _uploading = false;
 
     private Context _context = null;
-    private long _lastUpload = System.currentTimeMillis();
+    private long _lastUpload = 0;
     private final String _userId;
 
     public Logger(Context context, String userId)
@@ -260,6 +260,8 @@ public class Logger
     {
         final Logger me = this;
 
+        Log.e("AS", "1 " + force);
+
         if (this._uploading)
             return;
 
@@ -279,11 +281,11 @@ public class Logger
                 if (me._uploading)
                     return;
 
-                me._uploading = true;
-
                 long now = System.currentTimeMillis();
 
                 long interval = prefs.getLong(Logger.INTERVAL, Logger.DEFAULT_INTERVAL);
+
+                Log.e("AS", "3");
 
                 if (now - me._lastUpload < interval)
                     return;
@@ -294,6 +296,8 @@ public class Logger
 
                 if (restrictWifi && WiFiHelper.wifiAvailable(me._context) == false)
                     return;
+
+                me._uploading = true;
 
                 String endpointUri = prefs.getString(Logger.LOGGER_URI, null);
 
