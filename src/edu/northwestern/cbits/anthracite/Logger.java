@@ -260,8 +260,6 @@ public class Logger
     {
         final Logger me = this;
 
-        Log.e("AS", "1 " + force);
-
         if (this._uploading)
             return;
 
@@ -284,8 +282,6 @@ public class Logger
                 long now = System.currentTimeMillis();
 
                 long interval = prefs.getLong(Logger.INTERVAL, Logger.DEFAULT_INTERVAL);
-
-                Log.e("AS", "3");
 
                 if (now - me._lastUpload < interval)
                     return;
@@ -389,10 +385,12 @@ public class Logger
 
                                     mgr.shutdown();
 
-                                    if ((statusJson.has("status") && "success".equalsIgnoreCase(statusJson
-                                            .getString("status")))
-                                            || (statusJson.has("result") && "success".equalsIgnoreCase(statusJson
-                                                    .getString("result"))))
+                                    if ((statusJson.has("status") && 
+                                    	 "success".equalsIgnoreCase(statusJson.getString("status"))) || 
+                                    	(statusJson.has("result") && 
+                                    	 "success".equalsIgnoreCase(statusJson.getString("result"))) ||
+                                     	(statusJson.has("invalid") && 
+                                         "invalid".equalsIgnoreCase(statusJson.getString("result"))))
                                     {
                                         ContentValues values = new ContentValues();
                                         values.put(LogContentProvider.APP_EVENT_TRANSMITTED, System.currentTimeMillis());
