@@ -260,13 +260,20 @@ public class Logger
     {
         final Logger me = this;
 
+        Log.e("AC", "Log 1: "+ this._uploading);
         if (this._uploading)
             return;
 
+        Log.e("AC", "Log 1.5");
+
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me._context);
+
+        Log.e("AC", "Log 2: "+ prefs.getBoolean(Logger.LOGGER_ENABLED, Logger.LOGGER_ENABLED_DEFAULT));
 
         if (prefs.getBoolean(Logger.LOGGER_ENABLED, Logger.LOGGER_ENABLED_DEFAULT) == false)
             return;
+
+        Log.e("AC", "3");
 
         Runnable r = new Runnable()
         {
@@ -281,12 +288,15 @@ public class Logger
 
                 long now = System.currentTimeMillis();
 
+                Log.d("uploads are on the move", "yes");
+
                 long interval = prefs.getLong(Logger.INTERVAL, Logger.DEFAULT_INTERVAL);
 
                 if (now - me._lastUpload < interval)
                     return;
 
                 me._lastUpload = now;
+
 
                 boolean restrictWifi = prefs.getBoolean(Logger.ONLY_WIFI, Logger.ONLY_WIFI_DEFAULT);
 
@@ -598,6 +608,8 @@ public class Logger
 
     public void setEnabled(boolean enabled)
     {
+        Log.e("AC", "SET ENABLED: " + enabled);
+
         this.setBoolean(Logger.LOGGER_ENABLED, enabled);
     }
 
