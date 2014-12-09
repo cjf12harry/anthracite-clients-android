@@ -92,6 +92,9 @@ public class Logger
     private static final boolean DEBUG_DEFAULT = false;
     private static final String DEBUG = "edu.northwestern.cbits.anthracite.DEBUG";
 
+    private static final boolean HEARTBEAT_DEFAULT = false;
+    private static final String HEARTBEAT = "edu.northwestern.cbits.anthracite.HEARTBEAT";
+
     private static final String RAILS_MODE = "edu.northwestern.cbits.anthracite.RAILS_MODE";
     private static final boolean RAILS_MODE_DEFAULT = false;
 
@@ -115,8 +118,7 @@ public class Logger
 
             Intent intent = new Intent(info.packageName + ".UPLOAD_LOGS_INTENT");
 
-            PendingIntent pending = PendingIntent.getService(this._context, 0, intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent pending = PendingIntent.getService(this._context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
             alarms.setInexactRepeating(AlarmManager.RTC, 0, 60000, pending);
         }
@@ -260,20 +262,22 @@ public class Logger
     {
         final Logger me = this;
 
-        Log.e("AC", "Log 1: "+ this._uploading);
         if (this._uploading)
             return;
 
-        Log.e("AC", "Log 1.5");
-
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me._context);
-
-        Log.e("AC", "Log 2: "+ prefs.getBoolean(Logger.LOGGER_ENABLED, Logger.LOGGER_ENABLED_DEFAULT));
 
         if (prefs.getBoolean(Logger.LOGGER_ENABLED, Logger.LOGGER_ENABLED_DEFAULT) == false)
             return;
 
-        Log.e("AC", "3");
+        if (prefs.getBoolean(Logger.HEARTBEAT, Logger.HEARTBEAT_DEFAULT))
+        {
+            HashMap<String, Object> payload = new HashMap<String, Object>();
+            payload.put("source", "Logger.attemptUploads");
+            payload.put("force", force);
+
+            this.log("heartbeat", payload);
+        }
 
         Runnable r = new Runnable()
         {
@@ -288,15 +292,12 @@ public class Logger
 
                 long now = System.currentTimeMillis();
 
-                Log.d("uploads are on the move", "yes");
-
                 long interval = prefs.getLong(Logger.INTERVAL, Logger.DEFAULT_INTERVAL);
 
                 if (now - me._lastUpload < interval)
                     return;
 
                 me._lastUpload = now;
-
 
                 boolean restrictWifi = prefs.getBoolean(Logger.ONLY_WIFI, Logger.ONLY_WIFI_DEFAULT);
 
@@ -332,8 +333,7 @@ public class Logger
                         String[] args =
                         { "" + 0 };
 
-                        Cursor c = me._context.getContentResolver().query(LogContentProvider.eventsUri(me._context),
-                                null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
+                        Cursor c = me._context.getContentResolver().query(LogContentProvider.eventsUri(me._context), null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
 
                         while (c.moveToNext())
                         {
@@ -341,16 +341,13 @@ public class Logger
                             {
                                 if (prefs.getBoolean(Logger.RAILS_MODE, Logger.RAILS_MODE_DEFAULT))
                                 {
-                                    AndroidHttpClient androidClient = AndroidHttpClient.newInstance(
-                                            "Anthracite Event Logger", me._context);
-                                    ThreadSafeClientConnManager mgr = new ThreadSafeClientConnManager(
-                                            androidClient.getParams(), registry);
+                                    AndroidHttpClient androidClient = AndroidHttpClient.newInstance("Anthracite Event Logger", me._context);
+                                    ThreadSafeClientConnManager mgr = new ThreadSafeClientConnManager(androidClient.getParams(), registry);
 
                                     HttpClient httpClient = new DefaultHttpClient(mgr, androidClient.getParams());
                                     androidClient.close();
 
-                                    String payload = c
-                                            .getString(c.getColumnIndex(LogContentProvider.APP_EVENT_PAYLOAD));
+                                    String payload = c.getString(c.getColumnIndex(LogContentProvider.APP_EVENT_PAYLOAD));
 
                                     JSONObject payloadJson = new JSONObject(payload);
 
@@ -386,21 +383,13 @@ public class Logger
                                     String responseContent = EntityUtils.toString(httpEntity);
 
                                     if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
-                                        Log.e("LOG",
-                                                "Log upload result: " + responseContent + " ("
-                                                        + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID))
-                                                        + ")");
+                                        Log.e("LOG", "Log upload result: " + responseContent + " (" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) + ")");
 
                                     JSONObject statusJson = new JSONObject(responseContent);
 
                                     mgr.shutdown();
 
-                                    if ((statusJson.has("status") && 
-                                    	 "success".equalsIgnoreCase(statusJson.getString("status"))) || 
-                                    	(statusJson.has("result") && 
-                                    	 "success".equalsIgnoreCase(statusJson.getString("result"))) ||
-                                     	(statusJson.has("invalid") && 
-                                         "invalid".equalsIgnoreCase(statusJson.getString("result"))))
+                                    if ((statusJson.has("status") && "success".equalsIgnoreCase(statusJson.getString("status"))) || (statusJson.has("result") && "success".equalsIgnoreCase(statusJson.getString("result"))) || (statusJson.has("invalid") && "invalid".equalsIgnoreCase(statusJson.getString("result"))))
                                     {
                                         ContentValues values = new ContentValues();
                                         values.put(LogContentProvider.APP_EVENT_TRANSMITTED, System.currentTimeMillis());
@@ -409,23 +398,18 @@ public class Logger
                                         String[] updateArgs =
                                         { "" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) };
 
-                                        me._context.getContentResolver().update(
-                                                LogContentProvider.eventsUri(me._context), values, updateWhere,
-                                                updateArgs);
+                                        me._context.getContentResolver().update(LogContentProvider.eventsUri(me._context), values, updateWhere, updateArgs);
                                     }
                                 }
                                 else
                                 {
-                                    AndroidHttpClient androidClient = AndroidHttpClient.newInstance(
-                                            "Anthracite Event Logger", me._context);
-                                    ThreadSafeClientConnManager mgr = new ThreadSafeClientConnManager(
-                                            androidClient.getParams(), registry);
+                                    AndroidHttpClient androidClient = AndroidHttpClient.newInstance("Anthracite Event Logger", me._context);
+                                    ThreadSafeClientConnManager mgr = new ThreadSafeClientConnManager(androidClient.getParams(), registry);
 
                                     HttpClient httpClient = new DefaultHttpClient(mgr, androidClient.getParams());
                                     androidClient.close();
 
-                                    String payload = c
-                                            .getString(c.getColumnIndex(LogContentProvider.APP_EVENT_PAYLOAD));
+                                    String payload = c.getString(c.getColumnIndex(LogContentProvider.APP_EVENT_PAYLOAD));
 
                                     HttpPost httpPost = new HttpPost(siteUri);
 
@@ -443,19 +427,13 @@ public class Logger
                                     String responseContent = EntityUtils.toString(httpEntity);
 
                                     if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
-                                        Log.e("LOG",
-                                                "Log upload result: " + responseContent + " ("
-                                                        + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID))
-                                                        + ")");
+                                        Log.e("LOG", "Log upload result: " + responseContent + " (" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) + ")");
 
                                     JSONObject statusJson = new JSONObject(responseContent);
 
                                     mgr.shutdown();
 
-                                    if ((statusJson.has("status") && "success".equalsIgnoreCase(statusJson
-                                            .getString("status")))
-                                            || (statusJson.has("result") && "success".equalsIgnoreCase(statusJson
-                                                    .getString("result"))))
+                                    if ((statusJson.has("status") && "success".equalsIgnoreCase(statusJson.getString("status"))) || (statusJson.has("result") && "success".equalsIgnoreCase(statusJson.getString("result"))))
                                     {
                                         ContentValues values = new ContentValues();
                                         values.put(LogContentProvider.APP_EVENT_TRANSMITTED, System.currentTimeMillis());
@@ -464,9 +442,7 @@ public class Logger
                                         String[] updateArgs =
                                         { "" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) };
 
-                                        me._context.getContentResolver().update(
-                                                LogContentProvider.eventsUri(me._context), values, updateWhere,
-                                                updateArgs);
+                                        me._context.getContentResolver().update(LogContentProvider.eventsUri(me._context), values, updateWhere, updateArgs);
                                     }
                                 }
                             }
@@ -484,13 +460,11 @@ public class Logger
 
                         selection = LogContentProvider.APP_EVENT_TRANSMITTED + " != ?";
 
-                        me._context.getContentResolver().delete(LogContentProvider.eventsUri(me._context), selection,
-                                args);
+                        me._context.getContentResolver().delete(LogContentProvider.eventsUri(me._context), selection, args);
 
                         selection = LogContentProvider.APP_UPLOAD_TRANSMITTED + " = ?";
 
-                        c = me._context.getContentResolver().query(LogContentProvider.uploadsUri(me._context), null,
-                                selection, args, LogContentProvider.APP_UPLOAD_RECORDED);
+                        c = me._context.getContentResolver().query(LogContentProvider.uploadsUri(me._context), null, selection, args, LogContentProvider.APP_UPLOAD_RECORDED);
 
                         while (c.moveToNext())
                         {
@@ -499,10 +473,8 @@ public class Logger
 
                             try
                             {
-                                AndroidHttpClient androidClient = AndroidHttpClient.newInstance(
-                                        "Anthracite Event Logger", me._context);
-                                ThreadSafeClientConnManager mgr = new ThreadSafeClientConnManager(
-                                        androidClient.getParams(), registry);
+                                AndroidHttpClient androidClient = AndroidHttpClient.newInstance("Anthracite Event Logger", me._context);
+                                ThreadSafeClientConnManager mgr = new ThreadSafeClientConnManager(androidClient.getParams(), registry);
 
                                 HttpClient httpClient = new DefaultHttpClient(mgr, androidClient.getParams());
                                 androidClient.close();
@@ -531,14 +503,11 @@ public class Logger
                                     String[] updateArgs =
                                     { "" + c.getLong(c.getColumnIndex(LogContentProvider.APP_UPLOAD_ID)) };
 
-                                    me._context.getContentResolver().update(LogContentProvider.uploadsUri(me._context),
-                                            values, updateWhere, updateArgs);
+                                    me._context.getContentResolver().update(LogContentProvider.uploadsUri(me._context), values, updateWhere, updateArgs);
                                 }
 
                                 if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
-                                    Log.e("LOG", "Upload transmission result: " + EntityUtils.toString(httpEntity)
-                                            + " (" + c.getLong(c.getColumnIndex(LogContentProvider.APP_UPLOAD_ID))
-                                            + ")");
+                                    Log.e("LOG", "Upload transmission result: " + EntityUtils.toString(httpEntity) + " (" + c.getLong(c.getColumnIndex(LogContentProvider.APP_UPLOAD_ID)) + ")");
 
                                 mgr.shutdown();
                             }
@@ -556,8 +525,7 @@ public class Logger
 
                         selection = LogContentProvider.APP_UPLOAD_TRANSMITTED + " != ?";
 
-                        me._context.getContentResolver().delete(LogContentProvider.eventsUri(me._context), selection,
-                                args);
+                        me._context.getContentResolver().delete(LogContentProvider.eventsUri(me._context), selection, args);
                     }
                     catch (OutOfMemoryError e)
                     {
@@ -608,8 +576,6 @@ public class Logger
 
     public void setEnabled(boolean enabled)
     {
-        Log.e("AC", "SET ENABLED: " + enabled);
-
         this.setBoolean(Logger.LOGGER_ENABLED, enabled);
     }
 
@@ -638,6 +604,11 @@ public class Logger
     public void setDebug(boolean debug)
     {
         this.setBoolean(Logger.DEBUG, debug);
+    }
+
+    public void setHeartbeat(boolean heartbeat)
+    {
+        this.setBoolean(Logger.HEARTBEAT, heartbeat);
     }
 
     public void setLiberalSsl(boolean liberal)
