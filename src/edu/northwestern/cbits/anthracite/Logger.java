@@ -120,7 +120,14 @@ public class Logger
 
             PendingIntent pending = PendingIntent.getService(this._context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-            alarms.setInexactRepeating(AlarmManager.RTC, 0, 60000, pending);
+            // Setting all reminders for alls using Anthracite client to run on the same 5 minute
+            // intervals to save battery.
+
+            long next = System.currentTimeMillis() + 300000;
+
+            next = next - (next % 300000);
+
+            alarms.setInexactRepeating(AlarmManager.RTC, next, 300000, pending);
         }
         catch (NameNotFoundException e)
         {
