@@ -3,6 +3,7 @@ package edu.northwestern.cbits.anthracite;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.ConnectException;
 import java.net.URI;
 import java.security.KeyStore;
 import java.text.SimpleDateFormat;
@@ -151,6 +152,8 @@ public class Logger
     @SuppressWarnings("unchecked")
     public boolean log(String event, Map<String, Object> payload)
     {
+        Log.e("AC", "LOG: " + event);
+
         long now = System.currentTimeMillis();
 
         if (payload == null)
@@ -455,11 +458,15 @@ public class Logger
                             }
                             catch (IOException e)
                             {
-                                e.printStackTrace();
+                                me.logException(e);
                             }
                             catch (NameNotFoundException e)
                             {
-                                e.printStackTrace();
+                                me.logException(e);
+                            }
+                            catch (Exception e)
+                            {
+                                me.logException(e);
                             }
                         }
 
@@ -520,11 +527,11 @@ public class Logger
                             }
                             catch (IOException e)
                             {
-                                e.printStackTrace();
+                                me.logException(e);
                             }
                             catch (NameNotFoundException e)
                             {
-                                e.printStackTrace();
+                                me.logException(e);
                             }
                         }
 
@@ -536,11 +543,11 @@ public class Logger
                     }
                     catch (OutOfMemoryError e)
                     {
-                        e.printStackTrace();
+                        me.logException(e);
                     }
                     catch (Exception e)
                     {
-                        e.printStackTrace();
+                        me.logException(e);
                     }
                 }
 
@@ -668,7 +675,7 @@ public class Logger
         }
         catch (NameNotFoundException e)
         {
-            e.printStackTrace();
+            this.logException(e);
         }
 
         return (u != null);
