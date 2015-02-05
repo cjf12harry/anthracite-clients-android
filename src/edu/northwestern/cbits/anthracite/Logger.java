@@ -429,7 +429,6 @@ public class Logger
 
                                     httpPost.setEntity(entity);
 
-                                    httpClient.execute(httpPost);
                                     HttpResponse response = httpClient.execute(httpPost);
 
                                     HttpEntity httpEntity = response.getEntity();
