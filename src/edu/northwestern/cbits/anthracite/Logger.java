@@ -463,6 +463,10 @@ public class Logger
                             {
                                 me.logException(e);
                             }
+                            catch (JSONException e)
+                            {
+                                // Don't log - will cause cascading failure... (80k+ e-mails FTW)
+                            }
                             catch (Exception e)
                             {
                                 me.logException(e);
