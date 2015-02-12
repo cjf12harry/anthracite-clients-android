@@ -99,6 +99,9 @@ public class Logger
     private static final String RAILS_MODE = "edu.northwestern.cbits.anthracite.RAILS_MODE";
     private static final boolean RAILS_MODE_DEFAULT = false;
 
+    private static final boolean ONLY_CHARGING_DEFAULT = false;
+    private static final String ONLY_CHARGING = "edu.northwestern.cbits.anthracite.ONLY_CHARGING";
+
     private static Logger _sharedInstance = null;
 
     private boolean _uploading = false;
@@ -312,6 +315,11 @@ public class Logger
                 boolean restrictWifi = prefs.getBoolean(Logger.ONLY_WIFI, Logger.ONLY_WIFI_DEFAULT);
 
                 if (restrictWifi && WiFiHelper.wifiAvailable(me._context) == false)
+                    return;
+
+                boolean restrictCharging = prefs.getBoolean(Logger.ONLY_CHARGING, Logger.ONLY_CHARGING_DEFAULT);
+
+                if (restrictCharging && PowerHelper.isPluggedIn(me._context) == false)
                     return;
 
                 me._uploading = true;
@@ -616,6 +624,11 @@ public class Logger
     public void setWifiOnly(boolean wifiOnly)
     {
         this.setBoolean(Logger.ONLY_WIFI, wifiOnly);
+    }
+
+    public void setChargingOnly(boolean chargingOnly)
+    {
+        this.setBoolean(Logger.ONLY_CHARGING, chargingOnly);
     }
 
     public void setDebug(boolean debug)
