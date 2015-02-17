@@ -355,11 +355,14 @@ public class Logger
 
                         while (c.moveToNext())
                         {
+                            AndroidHttpClient androidClient = null;
+
                             try
                             {
+                                androidClient = AndroidHttpClient.newInstance("Anthracite Event Logger", me._context);
+
                                 if (prefs.getBoolean(Logger.RAILS_MODE, Logger.RAILS_MODE_DEFAULT))
                                 {
-                                    AndroidHttpClient androidClient = AndroidHttpClient.newInstance("Anthracite Event Logger", me._context);
                                     ThreadSafeClientConnManager mgr = new ThreadSafeClientConnManager(androidClient.getParams(), registry);
 
                                     HttpClient httpClient = new DefaultHttpClient(mgr, androidClient.getParams());
@@ -421,7 +424,6 @@ public class Logger
                                 }
                                 else
                                 {
-                                    AndroidHttpClient androidClient = AndroidHttpClient.newInstance("Anthracite Event Logger", me._context);
                                     ThreadSafeClientConnManager mgr = new ThreadSafeClientConnManager(androidClient.getParams(), registry);
 
                                     HttpClient httpClient = new DefaultHttpClient(mgr, androidClient.getParams());
@@ -478,6 +480,11 @@ public class Logger
                             catch (Exception e)
                             {
                                 me.logException(e);
+                            }
+                            finally
+                            {
+                                if (androidClient != null)
+                                    androidClient.close();
                             }
                         }
 
