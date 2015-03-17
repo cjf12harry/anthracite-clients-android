@@ -155,8 +155,6 @@ public class Logger
     @SuppressWarnings("unchecked")
     public boolean log(String event, Map<String, Object> payload)
     {
-        Log.e("AC", "LOG: " + event);
-
         long now = System.currentTimeMillis();
 
         if (payload == null)
@@ -353,7 +351,7 @@ public class Logger
 
                         Cursor c = me._context.getContentResolver().query(LogContentProvider.eventsUri(me._context), null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
 
-                        while (c.moveToNext())
+                        for (int i = 0; i < 250 && c.moveToNext(); i++)
                         {
                             AndroidHttpClient androidClient = null;
 
