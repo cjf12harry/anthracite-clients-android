@@ -351,6 +351,9 @@ public class Logger
 
                         Cursor c = me._context.getContentResolver().query(LogContentProvider.eventsUri(me._context), null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
 
+                        if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
+                            Log.e("LOG", "Log endpoint: " + siteUri);
+
                         for (int i = 0; i < 250 && c.moveToNext(); i++)
                         {
                             AndroidHttpClient androidClient = null;
@@ -402,7 +405,7 @@ public class Logger
                                     String responseContent = EntityUtils.toString(httpEntity);
 
                                     if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
-                                        Log.e("LOG", "Log upload result: " + responseContent + " (" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) + ")");
+                                        Log.e("LOG", "Log upload result: " + responseContent + " (" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) + " remaining)");
 
                                     JSONObject statusJson = new JSONObject(responseContent);
 
@@ -444,7 +447,7 @@ public class Logger
                                     String responseContent = EntityUtils.toString(httpEntity);
 
                                     if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
-                                        Log.e("LOG", "Log upload result: " + responseContent + " (" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) + ")");
+                                        Log.e("LOG", "Log upload result: " + responseContent + " (" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) + " remaining)");
 
                                     JSONObject statusJson = new JSONObject(responseContent);
 
@@ -483,6 +486,8 @@ public class Logger
                             {
                                 if (androidClient != null)
                                     androidClient.close();
+
+                                System.gc();
                             }
                         }
 
