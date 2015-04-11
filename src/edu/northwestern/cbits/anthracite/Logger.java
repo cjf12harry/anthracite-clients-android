@@ -580,6 +580,30 @@ public class Logger
         t.start();
     }
 
+    public int pendingEventsCount()
+    {
+        int count = -1;
+
+        String selection = LogContentProvider.APP_EVENT_TRANSMITTED + " != ?";
+        String[] args = { "1" };
+
+        try
+        {
+            Cursor c = this._context.getContentResolver().query(LogContentProvider.eventsUri(this._context), null, selection, args, null);
+
+            count = c.getCount();
+
+            c.close();
+        }
+        catch (NameNotFoundException e)
+        {
+
+        }
+
+        return count;
+    }
+
+
     public void logException(Throwable e)
     {
         e.printStackTrace();
