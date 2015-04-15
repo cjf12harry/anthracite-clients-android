@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.ConnectException;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.security.KeyStore;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -101,6 +102,9 @@ public class Logger
 
     private static final boolean ONLY_CHARGING_DEFAULT = false;
     private static final String ONLY_CHARGING = "edu.northwestern.cbits.anthracite.ONLY_CHARGING";
+
+    private static final boolean LOG_CONNECTION_ERRORS_DEFAULT = false;
+    private static final String LOG_CONNECTION_ERRORS = "edu.northwestern.cbits.anthracite.LOG_CONNECTION_ERRORS";
 
     private static Logger _sharedInstance = null;
 
@@ -320,6 +324,8 @@ public class Logger
                 if (restrictCharging && PowerHelper.isPluggedIn(me._context) == false)
                     return;
 
+                boolean logConnectionErrors = prefs.getBoolean(Logger.LOG_CONNECTION_ERRORS, Logger.LOG_CONNECTION_ERRORS_DEFAULT);
+
                 me._uploading = true;
 
                 String endpointUri = prefs.getString(Logger.LOGGER_URI, null);
@@ -466,11 +472,17 @@ public class Logger
                                     }
                                 }
                             }
-                            catch (IOException e)
+                            catch (UnknownHostException e)
                             {
-                                me.logException(e);
+                                if (logConnectionErrors)
+                                    me.logException(e);
                             }
                             catch (NameNotFoundException e)
+                            {
+                                if (logConnectionErrors)
+                                    me.logException(e);
+                            }
+                            catch (IOException e)
                             {
                                 me.logException(e);
                             }
@@ -546,11 +558,17 @@ public class Logger
 
                                 mgr.shutdown();
                             }
-                            catch (IOException e)
+                            catch (UnknownHostException e)
                             {
-                                me.logException(e);
+                                if (logConnectionErrors)
+                                    me.logException(e);
                             }
                             catch (NameNotFoundException e)
+                            {
+                                if (logConnectionErrors)
+                                    me.logException(e);
+                            }
+                            catch (IOException e)
                             {
                                 me.logException(e);
                             }
@@ -641,6 +659,18 @@ public class Logger
     public void setRailsMode(boolean enableRailsMode)
     {
         this.setBoolean(Logger.RAILS_MODE, enableRailsMode);
+    }
+
+    public void setLogConnectionErrors(boolean logConnectionErrors)
+    {
+        this.setBoolean(Logger.LOG_CONNECTION_ERRORS, logConnectionErrors);
+    }
+
+    public boolean getLogConnectionErrors()
+    {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this._context);
+
+        return prefs.getBoolean(Logger.LOG_CONNECTION_ERRORS, Logger.LOG_CONNECTION_ERRORS_DEFAULT);
     }
 
     public boolean getEnabled()
