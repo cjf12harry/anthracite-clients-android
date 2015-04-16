@@ -135,7 +135,7 @@ public class Logger
 
             next = next - (next % 300000);
 
-            alarms.setInexactRepeating(AlarmManager.RTC, next, 300000, pending);
+            alarms.setInexactRepeating(AlarmManager.RTC_WAKEUP, next, 300000, pending);
         }
         catch (NameNotFoundException e)
         {
