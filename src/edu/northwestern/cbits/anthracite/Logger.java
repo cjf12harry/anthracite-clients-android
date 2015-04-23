@@ -498,8 +498,6 @@ public class Logger
                             {
                                 if (androidClient != null)
                                     androidClient.close();
-
-                                System.gc();
                             }
                         }
 
@@ -595,7 +593,17 @@ public class Logger
         };
 
         Thread t = new Thread(r);
-        t.start();
+
+        try
+        {
+            t.start();
+        }
+        catch (OutOfMemoryError e)
+        {
+            System.gc();
+
+            this.logException(e);
+        }
     }
 
     public int pendingEventsCount()
