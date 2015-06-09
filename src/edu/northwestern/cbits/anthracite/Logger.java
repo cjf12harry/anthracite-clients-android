@@ -3,7 +3,6 @@ package edu.northwestern.cbits.anthracite;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.ConnectException;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.security.KeyStore;
@@ -162,7 +161,7 @@ public class Logger
         long now = System.currentTimeMillis();
 
         if (payload == null)
-            payload = new HashMap<String, Object>();
+            payload = new HashMap<>();
 
         try
         {
@@ -259,11 +258,7 @@ public class Logger
 
                     return true;
                 }
-                catch (JSONException e)
-                {
-                    this.logException(e);
-                }
-                catch (NameNotFoundException e)
+                catch (JSONException | NameNotFoundException e)
                 {
                     this.logException(e);
                 }
@@ -287,7 +282,7 @@ public class Logger
 
         if (prefs.getBoolean(Logger.HEARTBEAT, Logger.HEARTBEAT_DEFAULT))
         {
-            HashMap<String, Object> payload = new HashMap<String, Object>();
+            HashMap<String, Object> payload = new HashMap<>();
             payload.put("source", "Logger.attemptUploads");
             payload.put("force", force);
 
@@ -440,7 +435,7 @@ public class Logger
 
                                     HttpPost httpPost = new HttpPost(siteUri);
 
-                                    List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+                                    List<NameValuePair> nameValuePairs = new ArrayList<>();
                                     nameValuePairs.add(new BasicNameValuePair(Logger.JSON, payload.toString()));
                                     HttpEntity entity = new UrlEncodedFormEntity(nameValuePairs, HTTP.US_ASCII);
 
@@ -452,8 +447,12 @@ public class Logger
 
                                     String responseContent = EntityUtils.toString(httpEntity);
 
+                                    Cursor remaining = me._context.getContentResolver().query(LogContentProvider.eventsUri(me._context), null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
+
                                     if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
-                                        Log.e("LOG", "Log upload result: " + responseContent + " (" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) + " remaining)");
+                                        Log.e("LOG", "Log upload result: " + responseContent + " (" + remaining.getCount() + " remaining)");
+
+                                    remaining.close();
 
                                     JSONObject statusJson = new JSONObject(responseContent);
 
@@ -472,17 +471,11 @@ public class Logger
                                     }
                                 }
                             }
-                            catch (UnknownHostException e)
+                            catch (UnknownHostException | NameNotFoundException e)
                             {
                                 if (logConnectionErrors)
                                     me.logException(e);
-                            }
-                            catch (NameNotFoundException e)
-                            {
-                                if (logConnectionErrors)
-                                    me.logException(e);
-                            }
-                            catch (IOException e)
+                            } catch (IOException e)
                             {
                                 me.logException(e);
                             }
@@ -556,17 +549,11 @@ public class Logger
 
                                 mgr.shutdown();
                             }
-                            catch (UnknownHostException e)
+                            catch (UnknownHostException | NameNotFoundException e)
                             {
                                 if (logConnectionErrors)
                                     me.logException(e);
-                            }
-                            catch (NameNotFoundException e)
-                            {
-                                if (logConnectionErrors)
-                                    me.logException(e);
-                            }
-                            catch (IOException e)
+                            } catch (IOException e)
                             {
                                 me.logException(e);
                             }
@@ -578,11 +565,7 @@ public class Logger
 
                         me._context.getContentResolver().delete(LogContentProvider.eventsUri(me._context), selection, args);
                     }
-                    catch (OutOfMemoryError e)
-                    {
-                        me.logException(e);
-                    }
-                    catch (Exception e)
+                    catch (OutOfMemoryError | Exception e)
                     {
                         me.logException(e);
                     }
@@ -634,7 +617,7 @@ public class Logger
     {
         e.printStackTrace();
 
-        Map<String, Object> payload = new HashMap<String, Object>();
+        Map<String, Object> payload = new HashMap<>();
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(baos);
