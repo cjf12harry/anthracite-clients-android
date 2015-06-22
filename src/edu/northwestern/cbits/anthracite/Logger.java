@@ -447,8 +447,12 @@ public class Logger
 
                                     String responseContent = EntityUtils.toString(httpEntity);
 
+                                    Cursor remaining = me._context.getContentResolver().query(LogContentProvider.eventsUri(me._context), null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
+
                                     if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
-                                        Log.e("LOG", "Log upload result: " + responseContent + " (" + c.getLong(c.getColumnIndex(LogContentProvider.APP_EVENT_ID)) + " remaining)");
+                                        Log.e("LOG", "Log upload result: " + responseContent + " (" + remaining.getCount() + " remaining)");
+
+                                    remaining.close();
 
                                     JSONObject statusJson = new JSONObject(responseContent);
 
