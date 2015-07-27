@@ -124,8 +124,9 @@ public class Logger
             PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
 
             Intent intent = new Intent(info.packageName + ".UPLOAD_LOGS_INTENT");
+            intent.setClassName(context, LogService.class.getCanonicalName());
 
-            PendingIntent pending = PendingIntent.getService(this._context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent pending = PendingIntent.getService(this._context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
             // Setting all reminders for alls using Anthracite client to run on the same 5 minute
             // intervals to save battery.
