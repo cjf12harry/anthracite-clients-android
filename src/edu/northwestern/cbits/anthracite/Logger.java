@@ -356,7 +356,9 @@ public class Logger
                         if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
                             Log.e("LOG", "Log endpoint: " + siteUri);
 
-                        for (int i = 0; i < 250 && c.moveToNext(); i++)
+                        int failCount = 0;
+
+                        for (int i = 0; i < 250 && c.moveToNext() && failCount < 8; i++)
                         {
                             AndroidHttpClient androidClient = null;
 
@@ -424,6 +426,8 @@ public class Logger
 
                                         me._context.getContentResolver().update(LogContentProvider.eventsUri(me._context), values, updateWhere, updateArgs);
                                     }
+                                    else
+                                        failCount += 1;
                                 }
                                 else
                                 {
@@ -474,18 +478,27 @@ public class Logger
                             }
                             catch (UnknownHostException | NameNotFoundException e)
                             {
+                                failCount += 1;
+
                                 if (logConnectionErrors)
                                     me.logException(e);
-                            } catch (IOException e)
+                            }
+                            catch (IOException e)
                             {
+                                failCount += 1;
+
                                 me.logException(e);
                             }
                             catch (JSONException e)
                             {
+                                failCount += 1;
+
                                 // Don't log - will cause cascading failure... (80k+ e-mails FTW)
                             }
                             catch (Exception e)
                             {
+                                failCount += 1;
+
                                 me.logException(e);
                             }
                             finally
