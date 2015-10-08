@@ -44,6 +44,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.location.Location;
@@ -52,6 +53,7 @@ import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 public class Logger
@@ -190,31 +192,32 @@ public class Logger
             {
                 if (prefs.getBoolean(Logger.LOGGER_LOCATION_ENABLED, Logger.LOGGER_LOCATION_ENABLED_DEFAULT))
                 {
-                    LocationManager lm = (LocationManager) this._context.getSystemService(Context.LOCATION_SERVICE);
-
-                    Location lastLocation = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-
-                    Location backupLocation = null;
-
-                    if (lastLocation != null && now - lastLocation.getTime() > (1000 * 60 * 60))
+                    if (ContextCompat.checkSelfPermission(this._context, "android.permission.ACCESS_FINE_LOCATION") == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this._context, "android.permission.ACCESS_COARSE_LOCATION") == PackageManager.PERMISSION_GRANTED)
                     {
-                        backupLocation = lastLocation;
+                        LocationManager lm = (LocationManager) this._context.getSystemService(Context.LOCATION_SERVICE);
 
-                        lastLocation = null;
-                    }
+                        Location lastLocation = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
-                    if (lastLocation == null)
-                        lastLocation = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                        Location backupLocation = null;
 
-                    if (lastLocation == null)
-                        lastLocation = backupLocation;
+                        if (lastLocation != null && now - lastLocation.getTime() > (1000 * 60 * 60)) {
+                            backupLocation = lastLocation;
 
-                    if (lastLocation != null)
-                    {
-                        payload.put(Logger.LATITUDE, lastLocation.getLatitude());
-                        payload.put(Logger.LONGITUDE, lastLocation.getLongitude());
-                        payload.put(Logger.ALTITUDE, lastLocation.getAltitude());
-                        payload.put(Logger.TIME_DRIFT, now - lastLocation.getTime());
+                            lastLocation = null;
+                        }
+
+                        if (lastLocation == null)
+                            lastLocation = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+                        if (lastLocation == null)
+                            lastLocation = backupLocation;
+
+                        if (lastLocation != null) {
+                            payload.put(Logger.LATITUDE, lastLocation.getLatitude());
+                            payload.put(Logger.LONGITUDE, lastLocation.getLongitude());
+                            payload.put(Logger.ALTITUDE, lastLocation.getAltitude());
+                            payload.put(Logger.TIME_DRIFT, now - lastLocation.getTime());
+                        }
                     }
                 }
 
@@ -356,7 +359,9 @@ public class Logger
                         if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
                             Log.e("LOG", "Log endpoint: " + siteUri);
 
-                        for (int i = 0; i < 250 && c.moveToNext(); i++)
+                        int failCount = 0;
+
+                        for (int i = 0; i < 250 && c.moveToNext() && failCount < 8; i++)
                         {
                             AndroidHttpClient androidClient = null;
 
@@ -424,6 +429,8 @@ public class Logger
 
                                         me._context.getContentResolver().update(LogContentProvider.eventsUri(me._context), values, updateWhere, updateArgs);
                                     }
+                                    else
+                                        failCount += 1;
                                 }
                                 else
                                 {
@@ -474,18 +481,27 @@ public class Logger
                             }
                             catch (UnknownHostException | NameNotFoundException e)
                             {
+                                failCount += 1;
+
                                 if (logConnectionErrors)
                                     me.logException(e);
-                            } catch (IOException e)
+                            }
+                            catch (IOException e)
                             {
+                                failCount += 1;
+
                                 me.logException(e);
                             }
                             catch (JSONException e)
                             {
+                                failCount += 1;
+
                                 // Don't log - will cause cascading failure... (80k+ e-mails FTW)
                             }
                             catch (Exception e)
                             {
+                                failCount += 1;
+
                                 me.logException(e);
                             }
                             finally
