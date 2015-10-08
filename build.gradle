@@ -22,16 +22,18 @@ android {
 
         androidTest.setRoot('tests')
     }
+
     compileSdkVersion 23
-    buildToolsVersion '23.0.0'
+    buildToolsVersion '23.0.1'
+
+    dependencies {
+        compile 'com.android.support:appcompat-v7:23.0.1'
+    }
 
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {}
-    productFlavors {
-    }
+    productFlavors {}
+
 }
 
-dependencies {
-    compile 'com.android.support:appcompat-v7:23.0.0'
-}
