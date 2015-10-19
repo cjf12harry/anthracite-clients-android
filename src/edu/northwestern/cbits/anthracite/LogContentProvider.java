@@ -43,10 +43,7 @@ public class LogContentProvider extends ContentProvider {
         PackageInfo info = context.getPackageManager().getPackageInfo(
                 context.getPackageName(), 0);
 
-        Uri u = Uri.parse("content://" + info.packageName + ".logging/"
-                + APP_EVENTS_TABLE);
-
-        return u;
+        return Uri.parse("content://" + info.packageName + ".logging/" + APP_EVENTS_TABLE);
     }
 
     public static Uri uploadsUri(Context context) throws NameNotFoundException {

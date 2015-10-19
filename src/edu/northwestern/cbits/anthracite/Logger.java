@@ -773,14 +773,16 @@ public class Logger
     {
         String userId = null;
 
-        AccountManager manager = (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);
-        Account[] list = manager.getAccountsByType("com.google");
+        if (ContextCompat.checkSelfPermission(context, "android.permissions.GET_ACCOUNTS") == PackageManager.PERMISSION_GRANTED) {
+            AccountManager manager = (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);
+            Account[] list = manager.getAccountsByType("com.google");
 
-        if (list.length == 0)
-            list = manager.getAccounts();
+            if (list.length == 0)
+                list = manager.getAccounts();
 
-        if (list.length > 0)
-            userId = list[0].name;
+            if (list.length > 0)
+                userId = list[0].name;
+        }
 
         return userId;
     }
