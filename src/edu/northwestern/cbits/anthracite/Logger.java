@@ -71,6 +71,9 @@ public class Logger
     private static final String APP_VERSION = "version";
     private static final String APP_VERSION_CODE = "version_code";
     private static final String APP_PACKAGE = "package";
+    private static final String APP_DEVICE_MANUFACTURER = "manufacturer";
+    private static final String APP_DEVICE_MODEL = "model";
+    
     private static final String JSON = "json";
 
     private static final String EXCEPTION_EVENT = "java_exception";
@@ -173,6 +176,9 @@ public class Logger
             payload.put(Logger.APP_VERSION, info.versionName);
             payload.put(Logger.APP_VERSION_CODE, info.versionCode);
             payload.put(Logger.APP_PACKAGE, this._context.getPackageName());
+
+            payload.put(Logger.APP_DEVICE_MANUFACTURER, Build.MANUFACTURER);
+            payload.put(Logger.APP_DEVICE_MODEL, Build.MODEL);
         }
         catch (NameNotFoundException e)
         {
