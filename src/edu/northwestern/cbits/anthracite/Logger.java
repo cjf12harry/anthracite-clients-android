@@ -110,6 +110,9 @@ public class Logger
     private static final boolean LOG_CONNECTION_ERRORS_DEFAULT = false;
     private static final String LOG_CONNECTION_ERRORS = "edu.northwestern.cbits.anthracite.LOG_CONNECTION_ERRORS";
 
+    private static final String LOGGER_USER_AGENT = "edu.northwestern.cbits.anthracite.LOGGER_USER_AGENT";
+    private static final String LOGGER_USER_AGENT_DEFAULT = "Anthracite Event Logger";
+
     private static Logger _sharedInstance = null;
 
     private boolean _uploading = false;
@@ -354,6 +357,8 @@ public class Logger
                             socketFactory = new LiberalSSLSocketFactory(trustStore);
                         }
 
+                        String userAgent = prefs.getString(Logger.LOGGER_USER_AGENT, Logger.LOGGER_USER_AGENT_DEFAULT);
+
                         registry.register(new Scheme("https", socketFactory, 443));
 
                         String selection = LogContentProvider.APP_EVENT_TRANSMITTED + " = ?";
@@ -373,7 +378,7 @@ public class Logger
 
                             try
                             {
-                                androidClient = AndroidHttpClient.newInstance("Anthracite Event Logger", me._context);
+                                androidClient = AndroidHttpClient.newInstance(userAgent, me._context);
 
                                 if (prefs.getBoolean(Logger.RAILS_MODE, Logger.RAILS_MODE_DEFAULT))
                                 {
@@ -730,6 +735,15 @@ public class Logger
 
         Editor e = prefs.edit();
         e.putString(Logger.LOGGER_URI, uri.toString());
+        e.commit();
+    }
+
+    public void setUserAgent(String userAgent)
+    {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this._context);
+
+        Editor e = prefs.edit();
+        e.putString(Logger.LOGGER_USER_AGENT, userAgent);
         e.commit();
     }
 
