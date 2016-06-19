@@ -35,8 +35,8 @@ android {
         versionCode 10006
         versionName "1.0.6"
         minSdkVersion 8
-        targetSdkVersion 23
-        compileSdkVersion 23
+        targetSdkVersion 24
+        compileSdkVersion 24
     }
 
     productFlavors {}
