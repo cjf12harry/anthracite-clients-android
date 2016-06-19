@@ -1,5 +1,6 @@
 sudo: false
 language: android
+jdk: openjdk8
 
 before_install:
   - wget http://services.gradle.org/distributions/gradle-2.12-bin.zip
