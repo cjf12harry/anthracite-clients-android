@@ -6,6 +6,7 @@ before_install:
   - unzip gradle-2.12-bin.zip
   - export GRADLE_HOME=$PWD/gradle-2.12
   - export PATH=$GRADLE_HOME/bin:$PATH
+  - android update sdk --no-ui --filter 1,2
 
 android:
   components:
