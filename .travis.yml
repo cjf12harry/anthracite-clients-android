@@ -7,7 +7,6 @@ before_install:
   - unzip gradle-2.12-bin.zip
   - export GRADLE_HOME=$PWD/gradle-2.12
   - export PATH=$GRADLE_HOME/bin:$PATH
-  - android list sdk -a --extended
   - ( sleep 5 && while [ 1 ]; do sleep 1; echo y; done ) | android update sdk -a --no-ui --filter tool,platform-tool,build-tools-24.0.0
 
 
