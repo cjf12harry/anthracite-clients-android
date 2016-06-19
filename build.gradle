@@ -4,7 +4,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.1.0'
+        classpath 'com.android.tools.build:gradle:2.1.2'
     }
 }
 apply plugin: 'com.android.library'
@@ -22,11 +22,11 @@ android {
         androidTest.setRoot('tests')
     }
 
-    compileSdkVersion 23
-    buildToolsVersion '23.0.3'
+    compileSdkVersion 24
+    buildToolsVersion '24.0.0'
 
     dependencies {
-        compile 'com.android.support:appcompat-v7:23.4.0'
+        compile 'com.android.support:appcompat-v7:24.0.0'
     }
 
     useLibrary 'org.apache.http.legacy'
