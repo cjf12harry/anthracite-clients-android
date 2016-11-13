@@ -20,6 +20,7 @@ import org.json.JSONObject;
 import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.ContentValues;
@@ -162,7 +163,7 @@ public class Logger
         return Logger._sharedInstance;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressLint({"BadHostnameVerifier", "TrustAllX509TrustManager", "MissingPermission"})
     public boolean log(String event, Map<String, Object> payload)
     {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this._context);
