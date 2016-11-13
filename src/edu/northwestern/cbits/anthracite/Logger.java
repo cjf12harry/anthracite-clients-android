@@ -5,31 +5,14 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
 import java.net.UnknownHostException;
-import java.security.KeyStore;
+import java.security.cert.CertificateException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.ArrayList;import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.conn.scheme.PlainSocketFactory;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -51,11 +34,25 @@ import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
-import android.net.http.AndroidHttpClient;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
+import okhttp3.FormBody;
+import okhttp3.Interceptor;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class Logger
 {
@@ -168,6 +165,11 @@ public class Logger
     @SuppressWarnings("unchecked")
     public boolean log(String event, Map<String, Object> payload)
     {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this._context);
+
+        if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
+            Log.e("LOG", "Log event: " + event);
+
         long now = System.currentTimeMillis();
 
         if (payload == null)
@@ -191,8 +193,6 @@ public class Logger
 
         payload.put("os_version", Build.VERSION.RELEASE);
         payload.put("os", "android");
-
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this._context);
 
         if (prefs.getBoolean(Logger.LOGGER_ENABLED, Logger.LOGGER_ENABLED_DEFAULT))
         {
@@ -338,6 +338,7 @@ public class Logger
                 me._uploading = true;
 
                 String endpointUri = prefs.getString(Logger.LOGGER_URI, null);
+                final String userAgent = prefs.getString(Logger.LOGGER_USER_AGENT, Logger.LOGGER_USER_AGENT_DEFAULT);
 
                 if (endpointUri != null)
                 {
@@ -345,26 +346,73 @@ public class Logger
                     {
                         URI siteUri = new URI(endpointUri);
 
-                        SchemeRegistry registry = new SchemeRegistry();
-                        registry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+                        OkHttpClient client = null;
 
-                        SSLSocketFactory socketFactory = SSLSocketFactory.getSocketFactory();
+                        final SSLContext sslContext = SSLContext.getInstance("SSL");
 
                         if (prefs.getBoolean(Logger.LIBERAL_SSL, Logger.LIBERAL_SSL_DEFAULT))
                         {
-                            KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-                            trustStore.load(null, null);
+                            final TrustManager[] trustAllCerts = new TrustManager[] {
+                                    new X509TrustManager() {
+                                        @Override
+                                        public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+                                        }
 
-                            socketFactory = new LiberalSSLSocketFactory(trustStore);
+                                        @Override
+                                        public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+                                        }
+
+                                        @Override
+                                        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                                            return new java.security.cert.X509Certificate[]{};
+                                        }
+                                    }
+                            };
+
+                            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+
+                            final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+
+                            OkHttpClient.Builder builder = new OkHttpClient.Builder();
+
+                            builder.sslSocketFactory(sslSocketFactory);
+                            builder.addNetworkInterceptor(new Interceptor() {
+                                @Override
+                                public Response intercept(Chain chain) throws IOException {
+                                    Request originalRequest = chain.request();
+                                    Request requestWithUserAgent = originalRequest.newBuilder()
+                                            .header("User-Agent", userAgent)
+                                            .build();
+                                    return chain.proceed(requestWithUserAgent);
+                                }
+                            });
+
+                            builder.hostnameVerifier(new HostnameVerifier() {
+                                @Override
+                                public boolean verify(String hostname, SSLSession session) {
+                                    return true;
+                                }
+                            });
+
+                            client = builder.build();
+                        } else {
+                            OkHttpClient.Builder builder = new OkHttpClient.Builder();
+                            builder.addNetworkInterceptor(new Interceptor() {
+                                @Override
+                                public Response intercept(Chain chain) throws IOException {
+                                    Request originalRequest = chain.request();
+                                    Request requestWithUserAgent = originalRequest.newBuilder()
+                                            .header("User-Agent", userAgent)
+                                            .build();
+                                    return chain.proceed(requestWithUserAgent);
+                                }
+                            });
+
+                            client = new OkHttpClient();
                         }
 
-                        String userAgent = prefs.getString(Logger.LOGGER_USER_AGENT, Logger.LOGGER_USER_AGENT_DEFAULT);
-
-                        registry.register(new Scheme("https", socketFactory, 443));
-
                         String selection = LogContentProvider.APP_EVENT_TRANSMITTED + " = ?";
-                        String[] args =
-                        { "" + 0 };
+                        String[] args = { "" + 0 };
 
                         Cursor c = me._context.getContentResolver().query(LogContentProvider.eventsUri(me._context), null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
 
@@ -375,24 +423,13 @@ public class Logger
 
                         for (int i = 0; i < 250 && c.moveToNext() && failCount < 8; i++)
                         {
-                            AndroidHttpClient androidClient = null;
-
                             try
                             {
-                                androidClient = AndroidHttpClient.newInstance(userAgent, me._context);
-
                                 if (prefs.getBoolean(Logger.RAILS_MODE, Logger.RAILS_MODE_DEFAULT))
                                 {
-                                    ThreadSafeClientConnManager mgr = new ThreadSafeClientConnManager(androidClient.getParams(), registry);
-
-                                    HttpClient httpClient = new DefaultHttpClient(mgr, androidClient.getParams());
-                                    androidClient.close();
-
                                     String payload = c.getString(c.getColumnIndex(LogContentProvider.APP_EVENT_PAYLOAD));
 
                                     JSONObject payloadJson = new JSONObject(payload);
-
-                                    HttpPost httpPost = new HttpPost(siteUri);
 
                                     JSONObject submission = new JSONObject();
 
@@ -411,24 +448,19 @@ public class Logger
 
                                     submission.put("event", event);
 
-                                    StringEntity entity = new StringEntity(submission.toString(2));
-                                    entity.setContentType("application/json");
+                                    Request request = new Request.Builder()
+                                            .url(endpointUri)
+                                            .post(RequestBody.create(MediaType.parse("application/json"), event.toString(2)))
+                                            .build();
 
-                                    httpPost.setEntity(entity);
+                                    Response response = client.newCall(request).execute();
 
-                                    httpClient.execute(httpPost);
-                                    HttpResponse response = httpClient.execute(httpPost);
-
-                                    HttpEntity httpEntity = response.getEntity();
-
-                                    String responseContent = EntityUtils.toString(httpEntity);
+                                    String responseContent = response.body().string();
 
                                     if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
                                         Log.e("LOG", "Log upload result: " + responseContent + " (" + c.getCount() + " remaining)");
 
                                     JSONObject statusJson = new JSONObject(responseContent);
-
-                                    mgr.shutdown();
 
                                     if ((statusJson.has("status") && "success".equalsIgnoreCase(statusJson.getString("status"))) || (statusJson.has("result") && "success".equalsIgnoreCase(statusJson.getString("result"))) || (statusJson.has("invalid") && "invalid".equalsIgnoreCase(statusJson.getString("result"))))
                                     {
@@ -446,26 +478,20 @@ public class Logger
                                 }
                                 else
                                 {
-                                    ThreadSafeClientConnManager mgr = new ThreadSafeClientConnManager(androidClient.getParams(), registry);
-
-                                    HttpClient httpClient = new DefaultHttpClient(mgr, androidClient.getParams());
-                                    androidClient.close();
-
                                     String payload = c.getString(c.getColumnIndex(LogContentProvider.APP_EVENT_PAYLOAD));
 
-                                    HttpPost httpPost = new HttpPost(siteUri);
+                                    RequestBody formBody = new FormBody.Builder()
+                                            .add(Logger.JSON, payload.toString())
+                                            .build();
 
-                                    List<NameValuePair> nameValuePairs = new ArrayList<>();
-                                    nameValuePairs.add(new BasicNameValuePair(Logger.JSON, payload.toString()));
-                                    HttpEntity entity = new UrlEncodedFormEntity(nameValuePairs, HTTP.US_ASCII);
+                                    Request request = new Request.Builder()
+                                            .url(endpointUri)
+                                            .post(formBody)
+                                            .build();
 
-                                    httpPost.setEntity(entity);
+                                    Response response = client.newCall(request).execute();
 
-                                    HttpResponse response = httpClient.execute(httpPost);
-
-                                    HttpEntity httpEntity = response.getEntity();
-
-                                    String responseContent = EntityUtils.toString(httpEntity);
+                                    String responseContent = response.body().string();
 
                                     Cursor remaining = me._context.getContentResolver().query(LogContentProvider.eventsUri(me._context), null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
 
@@ -475,8 +501,6 @@ public class Logger
                                     remaining.close();
 
                                     JSONObject statusJson = new JSONObject(responseContent);
-
-                                    mgr.shutdown();
 
                                     if ((statusJson.has("status") && "success".equalsIgnoreCase(statusJson.getString("status"))) || (statusJson.has("result") && "success".equalsIgnoreCase(statusJson.getString("result"))))
                                     {
@@ -516,11 +540,6 @@ public class Logger
 
                                 me.logException(e);
                             }
-                            finally
-                            {
-                                if (androidClient != null)
-                                    androidClient.close();
-                            }
                         }
 
                         c.close();
@@ -540,26 +559,19 @@ public class Logger
 
                             try
                             {
-                                AndroidHttpClient androidClient = AndroidHttpClient.newInstance("Anthracite Event Logger", me._context);
-                                ThreadSafeClientConnManager mgr = new ThreadSafeClientConnManager(androidClient.getParams(), registry);
-
-                                HttpClient httpClient = new DefaultHttpClient(mgr, androidClient.getParams());
-                                androidClient.close();
-
                                 JSONObject payloadJson = new JSONObject(payload);
 
-                                HttpPost httpPost = new HttpPost(uploadUri);
+                                Request request = new Request.Builder()
+                                        .url(endpointUri)
+                                        .post(RequestBody.create(MediaType.parse("application/json"), payloadJson.toString(2)))
+                                        .build();
 
-                                StringEntity entity = new StringEntity(payloadJson.toString(2));
-                                entity.setContentType("application/json");
+                                Response response = client.newCall(request).execute();
 
-                                httpPost.setEntity(entity);
+                                String responseContent = response.body().string();
 
-                                HttpResponse response = httpClient.execute(httpPost);
 
-                                HttpEntity httpEntity = response.getEntity();
-
-                                int status = response.getStatusLine().getStatusCode();
+                                int status = response.code();
 
                                 if (status >= 200 && status < 300)
                                 {
@@ -574,9 +586,7 @@ public class Logger
                                 }
 
                                 if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
-                                    Log.e("LOG", "Upload transmission result: " + EntityUtils.toString(httpEntity) + " (" + c.getLong(c.getColumnIndex(LogContentProvider.APP_UPLOAD_ID)) + ")");
-
-                                mgr.shutdown();
+                                    Log.e("LOG", "Upload transmission result: " + responseContent + " (" + c.getLong(c.getColumnIndex(LogContentProvider.APP_UPLOAD_ID)) + ")");
                             }
                             catch (UnknownHostException | NameNotFoundException e)
                             {

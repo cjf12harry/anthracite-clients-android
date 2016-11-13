@@ -7,7 +7,14 @@ buildscript {
         classpath 'com.android.tools.build:gradle:2.2.2'
     }
 }
+
+repositories {
+    jcenter()
+    maven { url "https://oss.sonatype.org/content/groups/public/" }
+}
+
 apply plugin: 'com.android.library'
+
 android {
     sourceSets {
         main {
@@ -27,9 +34,10 @@ android {
 
     dependencies {
         compile 'com.android.support:appcompat-v7:25.0.0'
+        compile 'com.squareup.okhttp3:okhttp:3.4.2'
     }
 
-    useLibrary 'org.apache.http.legacy'
+//    useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
         versionCode 10006
