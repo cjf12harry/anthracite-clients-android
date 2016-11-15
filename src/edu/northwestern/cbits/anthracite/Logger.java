@@ -203,7 +203,7 @@ public class Logger
             {
                 if (prefs.getBoolean(Logger.LOGGER_LOCATION_ENABLED, Logger.LOGGER_LOCATION_ENABLED_DEFAULT))
                 {
-                    if (ContextCompat.checkSelfPermission(this._context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this._context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || (ContextCompat.checkSelfPermission(this._context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this._context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED))
                     {
                         LocationManager lm = (LocationManager) this._context.getSystemService(Context.LOCATION_SERVICE);
 
@@ -805,7 +805,7 @@ public class Logger
     {
         String userId = null;
 
-        if (ContextCompat.checkSelfPermission(context, "android.permissions.GET_ACCOUNTS") == PackageManager.PERMISSION_GRANTED) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || (ContextCompat.checkSelfPermission(context, "android.permissions.GET_ACCOUNTS") == PackageManager.PERMISSION_GRANTED)) {
             AccountManager manager = (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);
             Account[] list = manager.getAccountsByType("com.google");
 
