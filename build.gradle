@@ -34,7 +34,7 @@ android {
     buildToolsVersion '25.0.2'
 
     dependencies {
-        compile 'com.android.support:appcompat-v7:25.1.0'
+        compile 'com.android.support:appcompat-v7:25.2.0'
         compile 'com.squareup.okhttp3:okhttp:3.4.2'
     }
 
