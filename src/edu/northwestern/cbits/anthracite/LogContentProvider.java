@@ -10,6 +10,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 
 public class LogContentProvider extends ContentProvider {
     private UriMatcher _matcher = new UriMatcher(UriMatcher.NO_MATCH);
@@ -101,7 +102,7 @@ public class LogContentProvider extends ContentProvider {
         return true;
     }
 
-    public int delete(Uri uri, String selection, String[] selectionArgs) {
+    public int delete(@NonNull Uri uri, String selection, String[] selectionArgs) {
         switch (this._matcher.match(uri)) {
         case LogContentProvider.APP_EVENTS:
             return this._db.delete(LogContentProvider.APP_EVENTS_TABLE,
@@ -115,12 +116,12 @@ public class LogContentProvider extends ContentProvider {
     }
 
     @Override
-    public String getType(Uri uri) {
+    public String getType(@NonNull Uri uri) {
         return null;
     }
 
     @Override
-    public Uri insert(Uri uri, ContentValues values) {
+    public Uri insert(@NonNull Uri uri, ContentValues values) {
         long id = 0;
 
         switch (this._matcher.match(uri)) {
@@ -137,8 +138,8 @@ public class LogContentProvider extends ContentProvider {
         return Uri.withAppendedPath(uri, "" + id);
     }
 
-    public Cursor query(Uri uri, String[] projection, String selection,
-            String[] selectionArgs, String sortOrder) {
+    public Cursor query(@NonNull Uri uri, String[] projection, String selection,
+                        String[] selectionArgs, String sortOrder) {
         switch (this._matcher.match(uri)) {
         case LogContentProvider.APP_EVENTS:
             return this._db
@@ -153,8 +154,8 @@ public class LogContentProvider extends ContentProvider {
         return null;
     }
 
-    public int update(Uri uri, ContentValues values, String selection,
-            String[] selectionArgs) {
+    public int update(@NonNull Uri uri, ContentValues values, String selection,
+                      String[] selectionArgs) {
         switch (this._matcher.match(uri)) {
         case LogContentProvider.APP_EVENTS:
             return this._db.update(LogContentProvider.APP_EVENTS_TABLE, values,

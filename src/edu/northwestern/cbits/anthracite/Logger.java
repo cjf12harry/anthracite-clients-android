@@ -7,7 +7,7 @@ import java.net.URI;
 import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;import java.util.Date;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -203,31 +203,33 @@ public class Logger
             {
                 if (prefs.getBoolean(Logger.LOGGER_LOCATION_ENABLED, Logger.LOGGER_LOCATION_ENABLED_DEFAULT))
                 {
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || (ContextCompat.checkSelfPermission(this._context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this._context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED))
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M )
                     {
-                        LocationManager lm = (LocationManager) this._context.getSystemService(Context.LOCATION_SERVICE);
+                        if (ContextCompat.checkSelfPermission(this._context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this._context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                            LocationManager lm = (LocationManager) this._context.getSystemService(Context.LOCATION_SERVICE);
 
-                        Location lastLocation = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                            Location lastLocation = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
-                        Location backupLocation = null;
+                            Location backupLocation = null;
 
-                        if (lastLocation != null && now - lastLocation.getTime() > (1000 * 60 * 60)) {
-                            backupLocation = lastLocation;
+                            if (lastLocation != null && now - lastLocation.getTime() > (1000 * 60 * 60)) {
+                                backupLocation = lastLocation;
 
-                            lastLocation = null;
-                        }
+                                lastLocation = null;
+                            }
 
-                        if (lastLocation == null)
-                            lastLocation = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                            if (lastLocation == null)
+                                lastLocation = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 
-                        if (lastLocation == null)
-                            lastLocation = backupLocation;
+                            if (lastLocation == null)
+                                lastLocation = backupLocation;
 
-                        if (lastLocation != null) {
-                            payload.put(Logger.LATITUDE, lastLocation.getLatitude());
-                            payload.put(Logger.LONGITUDE, lastLocation.getLongitude());
-                            payload.put(Logger.ALTITUDE, lastLocation.getAltitude());
-                            payload.put(Logger.TIME_DRIFT, now - lastLocation.getTime());
+                            if (lastLocation != null) {
+                                payload.put(Logger.LATITUDE, lastLocation.getLatitude());
+                                payload.put(Logger.LONGITUDE, lastLocation.getLongitude());
+                                payload.put(Logger.ALTITUDE, lastLocation.getAltitude());
+                                payload.put(Logger.TIME_DRIFT, now - lastLocation.getTime());
+                            }
                         }
                     }
                 }
@@ -482,7 +484,7 @@ public class Logger
                                     String payload = c.getString(c.getColumnIndex(LogContentProvider.APP_EVENT_PAYLOAD));
 
                                     RequestBody formBody = new FormBody.Builder()
-                                            .add(Logger.JSON, payload.toString())
+                                            .add(Logger.JSON, payload)
                                             .build();
 
                                     Request request = new Request.Builder()
@@ -679,7 +681,7 @@ public class Logger
 
         Editor e = prefs.edit();
         e.putBoolean(key, value);
-        e.commit();
+        e.apply();
     }
 
     public void setEnabled(boolean enabled)
@@ -747,7 +749,7 @@ public class Logger
 
         Editor e = prefs.edit();
         e.putString(Logger.LOGGER_URI, uri.toString());
-        e.commit();
+        e.apply();
     }
 
     public void setUserAgent(String userAgent)
@@ -756,7 +758,7 @@ public class Logger
 
         Editor e = prefs.edit();
         e.putString(Logger.LOGGER_USER_AGENT, userAgent);
-        e.commit();
+        e.apply();
     }
 
     public Uri getUploadUri()
@@ -775,7 +777,7 @@ public class Logger
 
         Editor e = prefs.edit();
         e.putLong(Logger.INTERVAL, interval);
-        e.commit();
+        e.apply();
     }
 
     public boolean postJsonContent(JSONObject content, Uri destination)
