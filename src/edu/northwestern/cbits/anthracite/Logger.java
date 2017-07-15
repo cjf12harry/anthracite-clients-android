@@ -195,6 +195,10 @@ public class Logger
         payload.put("os_version", Build.VERSION.RELEASE);
         payload.put("os", "android");
 
+        long utcOffset = TimeZone.getDefault().getOffset(System.currentTimeMillis());
+
+        payload.put("utc_offset_ms", utcOffset);
+
         if (prefs.getBoolean(Logger.LOGGER_ENABLED, Logger.LOGGER_ENABLED_DEFAULT))
         {
             String endpointUri = prefs.getString(Logger.LOGGER_URI, null);
