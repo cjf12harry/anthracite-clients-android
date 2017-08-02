@@ -118,7 +118,7 @@ public class Logger
 
     private Context _context = null;
     private long _lastUpload = 0;
-    private final String _userId;
+    private String _userId;
 
     public Logger(Context context, String userId)
     {
@@ -161,6 +161,10 @@ public class Logger
             Logger._sharedInstance = new Logger(context.getApplicationContext(), userId);
 
         return Logger._sharedInstance;
+    }
+
+    public void updateUserId(String userId) {
+        this._userId = userId;
     }
 
     @SuppressLint({"BadHostnameVerifier", "TrustAllX509TrustManager", "MissingPermission"})
@@ -657,7 +661,6 @@ public class Logger
 
         return count;
     }
-
 
     public void logException(Throwable e)
     {
