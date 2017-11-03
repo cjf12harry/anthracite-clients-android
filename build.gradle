@@ -32,15 +32,10 @@ android {
         androidTest.setRoot('tests')
     }
 
-    compileSdkVersion 26
-    buildToolsVersion '26.0.2'
-
     dependencies {
-        compile 'com.android.support:appcompat-v7:26.1.0'
-        compile 'com.squareup.okhttp3:okhttp:3.9.0'
+        api 'com.android.support:appcompat-v7:26.1.0'
+        api 'com.squareup.okhttp3:okhttp:3.9.0'
     }
-
-//    useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
         versionCode 10007
@@ -48,6 +43,7 @@ android {
         minSdkVersion 14
         targetSdkVersion 26
         compileSdkVersion 26
+        buildToolsVersion '26.0.2'
     }
 
     productFlavors {}
