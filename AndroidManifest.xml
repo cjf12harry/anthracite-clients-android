@@ -6,5 +6,6 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name">
+        <service android:name=".LogJobService" android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 </manifest>

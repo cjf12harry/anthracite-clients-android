@@ -124,30 +124,35 @@ public class Logger
     {
         this._context = context;
 
-        try
-        {
-            AlarmManager alarms = (AlarmManager) this._context.getSystemService(Context.ALARM_SERVICE);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                Intent intent = new Intent(context, LogService.class);
+                LogService.enqueueWork(context, LogService.class, LogService.JOB_ID, intent);
+            } else {
+                try
+                {
+                    AlarmManager alarms = (AlarmManager) this._context.getSystemService(Context.ALARM_SERVICE);
 
-            PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+                    PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
 
-            Intent intent = new Intent(info.packageName + ".UPLOAD_LOGS_INTENT");
-            intent.setClassName(context, LogService.class.getCanonicalName());
+                    Intent intent = new Intent(info.packageName + ".UPLOAD_LOGS_INTENT");
+                    intent.setClassName(context, LogService.class.getCanonicalName());
 
-            PendingIntent pending = PendingIntent.getService(this._context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+                    PendingIntent pending = PendingIntent.getService(this._context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
-            // Setting all reminders for alls using Anthracite client to run on the same 5 minute
-            // intervals to save battery.
+                    // Setting all reminders for alls using Anthracite client to run on the same 5 minute
+                    // intervals to save battery.
 
-            long next = System.currentTimeMillis() + 300000;
+                    long next = System.currentTimeMillis() + 300000;
 
-            next = next - (next % 300000);
+                    next = next - (next % 300000);
 
-            alarms.setInexactRepeating(AlarmManager.RTC_WAKEUP, next, 300000, pending);
-        }
-        catch (NameNotFoundException e)
-        {
-            e.printStackTrace();
-        }
+                    alarms.setInexactRepeating(AlarmManager.RTC_WAKEUP, next, 300000, pending);
+                }
+                catch (NameNotFoundException e)
+                {
+                    e.printStackTrace();
+                }
+            }
 
         this._userId = userId;
     }
@@ -295,7 +300,11 @@ public class Logger
 
     public void attemptUploads(final boolean force)
     {
+        Log.e("ANTHRACITE", "ATTEMPT UPLOADS: " + force);
+
         final Logger me = this;
+
+        Log.e("ANTHRACITE", "UPLOADING: " + this._uploading);
 
         if (this._uploading)
             return;
@@ -581,7 +590,6 @@ public class Logger
 
                                 String responseContent = response.body().string();
 
-
                                 int status = response.code();
 
                                 if (status >= 200 && status < 300)
@@ -625,17 +633,22 @@ public class Logger
             }
         };
 
-        Thread t = new Thread(r);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            Log.e("ANTHRACITE", "RUNNING ON GIVEN THREAD");
+            r.run();
+            Log.e("ANTHRACITE", "DONE RUNNING ON GIVEN THREAD");
+        } else {
+            Log.e("ANTHRACITE", "RUNNING ON NEW THREAD");
 
-        try
-        {
-            t.start();
-        }
-        catch (OutOfMemoryError e)
-        {
-            System.gc();
+            Thread t = new Thread(r);
 
-            this.logException(e);
+            try {
+                t.start();
+            } catch (OutOfMemoryError e) {
+                System.gc();
+
+                this.logException(e);
+            }
         }
     }
 
