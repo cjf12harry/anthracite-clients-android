@@ -300,11 +300,7 @@ public class Logger
 
     public void attemptUploads(final boolean force)
     {
-        Log.e("ANTHRACITE", "ATTEMPT UPLOADS: " + force);
-
         final Logger me = this;
-
-        Log.e("ANTHRACITE", "UPLOADING: " + this._uploading);
 
         if (this._uploading)
             return;
@@ -636,12 +632,8 @@ public class Logger
         };
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            Log.e("ANTHRACITE", "RUNNING ON GIVEN THREAD");
             r.run();
-            Log.e("ANTHRACITE", "DONE RUNNING ON GIVEN THREAD");
         } else {
-            Log.e("ANTHRACITE", "RUNNING ON NEW THREAD");
-
             Thread t = new Thread(r);
 
             try {
