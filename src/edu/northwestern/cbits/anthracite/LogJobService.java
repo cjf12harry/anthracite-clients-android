@@ -6,10 +6,6 @@ import android.content.Intent;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 
-/**
- * Created by cjkarr on 12/19/2017.
- */
-
 @RequiresApi(Build.VERSION_CODES.O)
 public class LogJobService extends JobService {
     @Override
