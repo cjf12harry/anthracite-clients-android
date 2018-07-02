@@ -33,11 +33,11 @@ android {
         androidTest.setRoot('tests')
     }
 
-    compileSdkVersion 26
+    compileSdkVersion 27
     buildToolsVersion '27.0.3'
 
     dependencies {
-        implementation 'com.android.support:appcompat-v7:26.1.0'
+        implementation 'com.android.support:appcompat-v7:27.1.1'
         implementation 'com.squareup.okhttp3:okhttp:3.10.0'
     }
 
@@ -45,7 +45,7 @@ android {
         versionCode 10009
         versionName "1.0.9"
         minSdkVersion 14
-        targetSdkVersion 26
+        targetSdkVersion 27
         compileSdkVersion 26
         buildToolsVersion '27.0.3'
     }
