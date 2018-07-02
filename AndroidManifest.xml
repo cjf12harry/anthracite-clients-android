@@ -2,9 +2,11 @@
     package="edu.northwestern.cbits.anthracite">
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name">
+        <service android:name=".LogJobService" android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 </manifest>

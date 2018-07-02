@@ -1,3 +1,5 @@
+/* Copyright © 2018 by Northwestern University. All Rights Reserved. */
+
 package edu.northwestern.cbits.anthracite;
 
 import android.content.ContentProvider;
@@ -51,10 +53,8 @@ public class LogContentProvider extends ContentProvider {
         PackageInfo info = context.getPackageManager().getPackageInfo(
                 context.getPackageName(), 0);
 
-        Uri u = Uri.parse("content://" + info.packageName + ".logging/"
+        return Uri.parse("content://" + info.packageName + ".logging/"
                 + APP_UPLOADS_TABLE);
-
-        return u;
     }
 
     private SQLiteDatabase _db = null;

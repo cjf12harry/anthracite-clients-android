@@ -1,3 +1,5 @@
+/* Copyright © 2018 by Northwestern University. All Rights Reserved. */
+
 package edu.northwestern.cbits.anthracite;
 
 import java.io.ByteArrayOutputStream;
@@ -124,30 +126,35 @@ public class Logger
     {
         this._context = context;
 
-        try
-        {
-            AlarmManager alarms = (AlarmManager) this._context.getSystemService(Context.ALARM_SERVICE);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                Intent intent = new Intent(context, LogService.class);
+                LogService.enqueueWork(context, LogService.class, LogService.JOB_ID, intent);
+            } else {
+                try
+                {
+                    AlarmManager alarms = (AlarmManager) this._context.getSystemService(Context.ALARM_SERVICE);
 
-            PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+                    PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
 
-            Intent intent = new Intent(info.packageName + ".UPLOAD_LOGS_INTENT");
-            intent.setClassName(context, LogService.class.getCanonicalName());
+                    Intent intent = new Intent(info.packageName + ".UPLOAD_LOGS_INTENT");
+                    intent.setClassName(context, LogService.class.getCanonicalName());
 
-            PendingIntent pending = PendingIntent.getService(this._context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+                    PendingIntent pending = PendingIntent.getService(this._context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
-            // Setting all reminders for alls using Anthracite client to run on the same 5 minute
-            // intervals to save battery.
+                    // Setting all reminders for alls using Anthracite client to run on the same 5 minute
+                    // intervals to save battery.
 
-            long next = System.currentTimeMillis() + 300000;
+                    long next = System.currentTimeMillis() + 300000;
 
-            next = next - (next % 300000);
+                    next = next - (next % 300000);
 
-            alarms.setInexactRepeating(AlarmManager.RTC_WAKEUP, next, 300000, pending);
-        }
-        catch (NameNotFoundException e)
-        {
-            e.printStackTrace();
-        }
+                    alarms.setInexactRepeating(AlarmManager.RTC_WAKEUP, next, 300000, pending);
+                }
+                catch (NameNotFoundException e)
+                {
+                    e.printStackTrace();
+                }
+            }
 
         this._userId = userId;
     }
@@ -363,21 +370,23 @@ public class Logger
 
                         if (prefs.getBoolean(Logger.LIBERAL_SSL, Logger.LIBERAL_SSL_DEFAULT))
                         {
+                            X509TrustManager trustAll = new X509TrustManager() {
+                                @Override
+                                public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+                                }
+
+                                @Override
+                                public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+                                }
+
+                                @Override
+                                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                                    return new java.security.cert.X509Certificate[]{};
+                                }
+                            };
+
                             final TrustManager[] trustAllCerts = new TrustManager[] {
-                                    new X509TrustManager() {
-                                        @Override
-                                        public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
-                                        }
-
-                                        @Override
-                                        public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
-                                        }
-
-                                        @Override
-                                        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                                            return new java.security.cert.X509Certificate[]{};
-                                        }
-                                    }
+                                    trustAll
                             };
 
                             sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
@@ -386,7 +395,7 @@ public class Logger
 
                             OkHttpClient.Builder builder = new OkHttpClient.Builder();
 
-                            builder.sslSocketFactory(sslSocketFactory);
+                            builder.sslSocketFactory(sslSocketFactory, trustAll);
                             builder.addNetworkInterceptor(new Interceptor() {
                                 @Override
                                 public Response intercept(Chain chain) throws IOException {
@@ -581,7 +590,6 @@ public class Logger
 
                                 String responseContent = response.body().string();
 
-
                                 int status = response.code();
 
                                 if (status >= 200 && status < 300)
@@ -625,17 +633,18 @@ public class Logger
             }
         };
 
-        Thread t = new Thread(r);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            r.run();
+        } else {
+            Thread t = new Thread(r);
 
-        try
-        {
-            t.start();
-        }
-        catch (OutOfMemoryError e)
-        {
-            System.gc();
+            try {
+                t.start();
+            } catch (OutOfMemoryError e) {
+                System.gc();
 
-            this.logException(e);
+                this.logException(e);
+            }
         }
     }
 
