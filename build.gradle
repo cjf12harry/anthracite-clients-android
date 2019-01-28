@@ -17,7 +17,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.2.1'
+        classpath 'com.android.tools.build:gradle:3.3.0'
     }
 }
 
@@ -44,7 +44,7 @@ android {
 
     defaultConfig {
         versionCode 10010
-        versionName "1.0.10"
+        versionName "1.0.11"
         minSdkVersion 14
         targetSdkVersion 28
         compileSdkVersion 28
