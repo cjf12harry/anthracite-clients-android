@@ -179,8 +179,9 @@ public class Logger
     {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this._context);
 
-        if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
+        if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT)) {
             Log.e("LOG", "Log event: " + event);
+        }
 
         long now = System.currentTimeMillis();
 
@@ -304,8 +305,9 @@ public class Logger
     {
         final Logger me = this;
 
-        if (this._uploading)
+        if (this._uploading) {
             return;
+        }
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(me._context);
 
@@ -329,27 +331,34 @@ public class Logger
                 if (force)
                     me._lastUpload = 0;
 
-                if (me._uploading)
+                if (me._uploading) {
                     return;
+                }
+
+                int remaining = 0;
+                int failures = 0;
 
                 long now = System.currentTimeMillis();
 
                 long interval = prefs.getLong(Logger.INTERVAL, Logger.DEFAULT_INTERVAL);
 
-                if (now - me._lastUpload < interval)
+                if (now - me._lastUpload < interval) {
                     return;
+                }
 
                 me._lastUpload = now;
 
                 boolean restrictWifi = prefs.getBoolean(Logger.ONLY_WIFI, Logger.ONLY_WIFI_DEFAULT);
 
-                if (restrictWifi && WiFiHelper.wifiAvailable(me._context) == false)
+                if (restrictWifi && WiFiHelper.wifiAvailable(me._context) == false) {
                     return;
+                }
 
                 boolean restrictCharging = prefs.getBoolean(Logger.ONLY_CHARGING, Logger.ONLY_CHARGING_DEFAULT);
 
-                if (restrictCharging && PowerHelper.isPluggedIn(me._context) == false)
+                if (restrictCharging && PowerHelper.isPluggedIn(me._context) == false) {
                     return;
+                }
 
                 boolean logConnectionErrors = prefs.getBoolean(Logger.LOG_CONNECTION_ERRORS, Logger.LOG_CONNECTION_ERRORS_DEFAULT);
 
@@ -434,14 +443,15 @@ public class Logger
                         String selection = LogContentProvider.APP_EVENT_TRANSMITTED + " = ?";
                         String[] args = { "" + 0 };
 
-                        Cursor c = me._context.getContentResolver().query(LogContentProvider.eventsUri(me._context), null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
+                        Cursor c = me._context.getContentResolver().query(LogContentProvider.eventsUri(me._context), null, selection, args, null);
 
-                        if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
+                        if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT)) {
                             Log.e("LOG", "Log endpoint: " + siteUri);
+                        }
 
-                        int failCount = 0;
+                        remaining += c.getCount();
 
-                        for (int i = 0; i < 250 && c.moveToNext() && failCount < 8; i++)
+                        for (int i = 0; i < 250 && c.moveToNext() && failures < 8; i++)
                         {
                             try
                             {
@@ -477,8 +487,9 @@ public class Logger
 
                                     String responseContent = response.body().string();
 
-                                    if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
+                                    if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT)) {
                                         Log.e("LOG", "Log upload result: " + responseContent + " (" + c.getCount() + " remaining)");
+                                    }
 
                                     JSONObject statusJson = new JSONObject(responseContent);
 
@@ -493,8 +504,9 @@ public class Logger
 
                                         me._context.getContentResolver().update(LogContentProvider.eventsUri(me._context), values, updateWhere, updateArgs);
                                     }
-                                    else
-                                        failCount += 1;
+                                    else {
+                                        failures += 1;
+                                    }
                                 }
                                 else
                                 {
@@ -513,12 +525,14 @@ public class Logger
 
                                     String responseContent = response.body().string();
 
-                                    Cursor remaining = me._context.getContentResolver().query(LogContentProvider.eventsUri(me._context), null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
 
-                                    if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
-                                        Log.e("LOG", "Log upload result: " + responseContent + " (" + remaining.getCount() + " remaining)");
+                                    if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT)) {
+                                        Cursor remainingItems = me._context.getContentResolver().query(LogContentProvider.eventsUri(me._context), null, selection, args, LogContentProvider.APP_EVENT_RECORDED);
 
-                                    remaining.close();
+                                        Log.e("LOG", "Log upload result: " + responseContent + " (" + remainingItems.getCount() + " remaining)");
+
+                                        remainingItems.close();
+                                    }
 
                                     JSONObject statusJson = new JSONObject(responseContent);
 
@@ -537,26 +551,26 @@ public class Logger
                             }
                             catch (UnknownHostException | NameNotFoundException e)
                             {
-                                failCount += 1;
+                                failures += 1;
 
                                 if (logConnectionErrors)
                                     me.logException(e);
                             }
                             catch (IOException e)
                             {
-                                failCount += 1;
+                                failures += 1;
 
                                 me.logException(e);
                             }
                             catch (JSONException e)
                             {
-                                failCount += 1;
+                                failures += 1;
 
                                 // Don't log - will cause cascading failure... (80k+ e-mails FTW)
                             }
                             catch (Exception e)
                             {
-                                failCount += 1;
+                                failures += 1;
 
                                 me.logException(e);
                             }
@@ -566,11 +580,11 @@ public class Logger
 
                         selection = LogContentProvider.APP_EVENT_TRANSMITTED + " != ?";
 
-                        me._context.getContentResolver().delete(LogContentProvider.eventsUri(me._context), selection, args);
+                        int deleted = me._context.getContentResolver().delete(LogContentProvider.eventsUri(me._context), selection, args);
 
                         selection = LogContentProvider.APP_UPLOAD_TRANSMITTED + " = ?";
 
-                        c = me._context.getContentResolver().query(LogContentProvider.uploadsUri(me._context), null, selection, args, LogContentProvider.APP_UPLOAD_RECORDED);
+                        c = me._context.getContentResolver().query(LogContentProvider.uploadsUri(me._context), null, selection, args, null);
 
                         while (c.moveToNext())
                         {
@@ -604,8 +618,9 @@ public class Logger
                                     me._context.getContentResolver().update(LogContentProvider.uploadsUri(me._context), values, updateWhere, updateArgs);
                                 }
 
-                                if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT))
+                                if (prefs.getBoolean(Logger.DEBUG, Logger.DEBUG_DEFAULT)) {
                                     Log.e("LOG", "Upload transmission result: " + responseContent + " (" + c.getLong(c.getColumnIndex(LogContentProvider.APP_UPLOAD_ID)) + ")");
+                                }
                             }
                             catch (UnknownHostException | NameNotFoundException e)
                             {
@@ -630,6 +645,10 @@ public class Logger
                 }
 
                 me._uploading = false;
+
+                if (remaining > 250 && failures < 8) {
+                    this.run();
+                }
             }
         };
 
