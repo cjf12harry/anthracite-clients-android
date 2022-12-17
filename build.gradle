@@ -1,10 +1,11 @@
 buildscript {
     repositories {
         jcenter()
+	 maven { url 'https://maven.google.com' }
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.0.0'
+        classpath 'com.android.tools.build:gradle:4.2.2'
     }
 }
 apply plugin: 'com.android.library'
@@ -31,7 +32,13 @@ android {
 
     useLibrary 'org.apache.http.legacy'
 
-    defaultConfig {}
+   defaultConfig {
+        minSdkVersion 10
+        targetSdkVersion 23
+    }	
     productFlavors {}
+    lintOptions {
+        abortOnError false
+    }
 }
 
