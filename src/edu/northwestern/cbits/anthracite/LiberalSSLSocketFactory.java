@@ -1,3 +1,5 @@
+/* Copyright © 2018 by Northwestern University. All Rights Reserved. */
+
 package edu.northwestern.cbits.anthracite;
 
 import java.io.IOException;
@@ -36,7 +38,7 @@ public class LiberalSSLSocketFactory extends SSLSocketFactory {
             }
 
             public X509Certificate[] getAcceptedIssuers() {
-                return null;
+                return new X509Certificate[] {};
             }
         };
 

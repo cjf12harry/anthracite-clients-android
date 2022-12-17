@@ -1,14 +1,29 @@
+repositories {
+    jcenter()
+    maven { url "https://oss.sonatype.org/content/groups/public/" }
+    maven { url "https://maven.google.com" }
+}
+
 buildscript {
     repositories {
+        google()
         jcenter()
-	 maven { url 'https://maven.google.com' }
+      	maven { url 'https://maven.google.com' }
     }
 
     dependencies {
         classpath 'com.android.tools.build:gradle:4.2.2'
+        maven {
+            url 'https://oss.sonatype.org/content/groups/public/'
+        }
+        flatDir{
+            dirs 'libs'
+        }
     }
 }
+
 apply plugin: 'com.android.library'
+
 android {
     sourceSets {
         main {
@@ -23,14 +38,19 @@ android {
         androidTest.setRoot('tests')
     }
 
-    compileSdkVersion 23
-    buildToolsVersion '23.0.2'
-
     dependencies {
-        compile 'com.android.support:appcompat-v7:23.3.0'
+        api 'com.android.support:appcompat-v7:28.0.0'
+        api 'com.squareup.okhttp3:okhttp:3.11.0'
     }
 
-    useLibrary 'org.apache.http.legacy'
+    defaultConfig {
+        versionCode 10010
+        versionName "1.0.11"
+        minSdkVersion 14
+        targetSdkVersion 28
+        compileSdkVersion 28
+        buildToolsVersion '28.0.3'
+    }
 
    defaultConfig {
         minSdkVersion 10

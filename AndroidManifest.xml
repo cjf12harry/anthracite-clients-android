@@ -1,13 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="edu.northwestern.cbits.anthracite"
-    android:versionCode="10005"
-    android:versionName="1.0.5" >
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    package="edu.northwestern.cbits.anthracite">
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
-   <application
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name">
+        <service android:name=".LogJobService" android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 </manifest>

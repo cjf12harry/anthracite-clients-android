@@ -1,3 +1,5 @@
+/* Copyright © 2018 by Northwestern University. All Rights Reserved. */
+
 package edu.northwestern.cbits.anthracite;
 
 import android.content.Context;
@@ -15,8 +17,7 @@ public class WiFiHelper {
         if (now - WiFiHelper._lastWifiCheck > 10000) {
             WiFiHelper._lastWifiCheck = now;
 
-            WifiManager wifi = (WifiManager) context
-                    .getSystemService(Context.WIFI_SERVICE);
+            WifiManager wifi = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
             if (wifi.isWifiEnabled()) {
                 WiFiHelper._wifiAvailable = true;
